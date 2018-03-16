@@ -1,0 +1,7 @@
+.vscode/
+Include/
+Lib/
+Scripts/
+tcl/
+
+pip-selfcheck.json
