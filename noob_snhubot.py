@@ -2,6 +2,7 @@ import os
 import time
 import re
 import json
+import random
 from slackclient import SlackClient
 
 # create env variable with client_id in it
@@ -16,10 +17,11 @@ bot_id = None
 # constants
 RTM_READ_DELAY = 1
 EXAMPLE_COMMAND = "do"
-COMMANDS = [
-    "do", 
+COMMANDS = [     
+    "do",
     "what's my name?", 
-    "what is the airspeed velocity of an unladen swallow?"
+    "what is the airspeed velocity of an unladen swallow?",
+    "roll"
 ]
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
@@ -64,26 +66,56 @@ def handle_command(command, channel, user):
         response = "Your name is <@{}>! Did you forget or something?".format(user)
     if command.lower().startswith(COMMANDS[2]):
         response = "https://youtu.be/y2R3FvS4xr4?t=14s"
-    if command.lower().startswith("attachment"):
-        attach = True
-        attachment = json.dumps([
-            {
-                "text":"<@{0}> rolled *11*".format(user),
-                "fields":[
-                    {
-                        "title":"Roll",
-                        "value":"2d6",
-                        "short":"true"
-                    },
-                    {
-                        "title":"Values",
-                        "value":"6 5",
-                        "short":"true"
-                    }
-                ],
-                "color":"good"
-            }
-        ])  
+    if command.lower().startswith(COMMANDS[3]):
+        ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?"
+        roll = command.split()[1]
+
+        match = re.match(ROLL_REGEX, roll)
+
+        if match is None:
+            response = "That is an invalid roll. Try again."
+        else:
+            rolls = []
+            num_dice = int(match.groups()[0])
+            pips = int(match.groups()[1])            
+
+            for x in range(num_dice):
+                rolls.append(random.randint(1, pips))
+
+            total = sum(rolls)
+            
+            if match.groups()[2] is not None:
+                mod = int(match.groups()[4])
+
+                if match.groups()[3] == "+":
+                    total += mod
+                else:
+                    total -= mod            
+            
+            attach = True
+            attachment = json.dumps([
+                {
+                    "text":"<@{}> rolled *{}*".format(user, total),
+                    "fields":[
+                        {
+                            "title":"Roll",
+                            "value":"{}".format(match.group()),
+                            "short":"true"
+                        },
+                        {
+                            "title":"Values",
+                            "value":"{}".format(" ".join(str(roll) for roll in rolls)),
+                            "short":"true"
+                        },
+                        {
+                            "title":"Modifier",
+                            "value":"{}".format(match.groups()[2]),
+                            "short":"true"
+                        }
+                    ],
+                    "color":"good"
+                }
+            ])
     
     # Sends the response back to the channel
     if attach:
