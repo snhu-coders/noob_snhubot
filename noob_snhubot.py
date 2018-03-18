@@ -67,7 +67,7 @@ def handle_command(command, channel, user):
     if command.lower().startswith(COMMANDS[2]):
         response = "https://youtu.be/y2R3FvS4xr4?t=14s"
     if command.lower().startswith(COMMANDS[3]):
-        ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?"
+        ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
         roll = command.split()[1]
 
         match = re.match(ROLL_REGEX, roll)
