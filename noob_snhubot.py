@@ -68,54 +68,56 @@ def handle_command(command, channel, user):
         response = "https://youtu.be/y2R3FvS4xr4?t=14s"
     if command.lower().startswith(COMMANDS[3]):
         ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
-        roll = command.split()[1]
+        roll = command.split()
 
-        match = re.match(ROLL_REGEX, roll)
+        response = "That is an invalid roll. Try again"
 
-        if match is None:
-            response = "That is an invalid roll. Try again."
-        else:
-            rolls = []
-            num_dice = int(match.groups()[0])
-            pips = int(match.groups()[1])            
+        if len(roll) > 1:
+            roll = command.split()[1]
+            match = re.match(ROLL_REGEX, roll)
 
-            for x in range(num_dice):
-                rolls.append(random.randint(1, pips))
+            if match is not None:
+                rolls = []
+                num_dice = int(match.groups()[0])
+                pips = int(match.groups()[1])            
 
-            total = sum(rolls)
-            
-            if match.groups()[2] is not None:
-                mod = int(match.groups()[4])
+                for x in range(num_dice):
+                    rolls.append(random.randint(1, pips))
 
-                if match.groups()[3] == "+":
-                    total += mod
-                else:
-                    total -= mod            
-            
-            attach = True
-            attachment = json.dumps([
-                {
-                    "text":"<@{}> rolled *{}*".format(user, total),
-                    "fields":[
-                        {
-                            "title":"Roll",
-                            "value":"{}".format(match.group()),
-                            "short":"true"
-                        },
-                        {
-                            "title":"Values",
-                            "value":"{}".format(" ".join(str(roll) for roll in rolls)),
-                            "short":"true"
-                        },
-                        {
-                            "title":"Modifier",
-                            "value":"{}".format(match.groups()[2]),
-                            "short":"true"
-                        }
-                    ],
-                    "color":"good"
-                }
-            ])
+                total = sum(rolls)
+                
+                if match.groups()[2] is not None:
+                    mod = int(match.groups()[4])
+
+                    if match.groups()[3] == "+":
+                        total += mod
+                    else:
+                        total -= mod            
+                
+                attach = True
+                attachment = json.dumps([
+                    {
+                        "text":"<@{}> rolled *{}*".format(user, total),
+                        "fields":[
+                            {
+                                "title":"Roll",
+                                "value":"{}".format(match.group()),
+                                "short":"true"
+                            },
+                            {
+                                "title":"Values",
+                                "value":"{}".format(" ".join(str(roll) for roll in rolls)),
+                                "short":"true"
+                            },
+                            {
+                                "title":"Modifier",
+                                "value":"{}".format(match.groups()[2]),
+                                "short":"true"
+                            }
+                        ],
+                        "color":"good"
+                    }
+                ])
     
     # Sends the response back to the channel
     if attach:
