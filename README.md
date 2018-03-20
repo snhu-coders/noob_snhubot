@@ -6,7 +6,7 @@ A simple Slack bot written in Python for the [snhu_coders](https://snhu_coders.s
 
 Noob SNHUbot is very basic. It will only respond to a select few queries currently configured within a Python List (needs to be updated). It also only utilizes the Slack Client [RTM API](https://api.slack.com/rtm). The [Events](https://api.slack.com/events) and [Web](https://api.slack.com/web) APIs have not been utilized, but likely will be implemented later.
 
-### Functionality
+## Functionality
 
 Noob SNHUbot will respond to the following direct messages. To begin a conversation, start a message in the channel with `@Noob SNHUbot`:
 
@@ -19,12 +19,12 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * what is the airspeed velocity of an unladen swallow?
    - A clever joke.
    - Responds with a Youtube video to a Monty Python clip.
-* roll _`XdY[±Z]`_
+* roll `XdY[±Z]`
     - Rolls dice with modifiers!
-    - Invalid rolls will respond with "_That roll is not valid. Try `@Noob SNHUbot roll help`_"
+    - Invalid rolls will respond with "That roll is not valid. Try `@Noob SNHUbot roll help`"
     - `roll help` will respond with a help message that explains the syntax with examples.
     - Valid roll respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message.
 
-### Contributing
+## Contributing
 
 If you'd like to contribute, join us on the Slack workspace mentioned above. All SNHU students are welcome.
