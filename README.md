@@ -12,18 +12,18 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 
 * do
    - Basic command from tutorial.
-   - Responds with: "_Sure...write some more code then I can do that!_"
+   - Responds with: _"Sure...write some more code then I can do that!"_
 * what's my name?
    - Simple call and response.
-   - Resonds with: "_Your name is <@{name}>! Did you forget or something?_"
+   - Resonds with: _"Your name is `<@{name}>`! Did you forget or something?"_
 * what is the airspeed velocity of an unladen swallow?
    - A clever joke.
-   - Responds with a Youtube video to a Monty Python clip.
+   - Responds with a Youtube video to a Monty Python and the Holy Grail clip.
 * roll `XdY[±Z]`
-    - Rolls dice with modifiers!
-    - Invalid rolls will respond with "That roll is not valid. Try `@Noob SNHUbot roll help`"
+    - Rolls X number of Y-Sided dice with a + or - Z modifier!
+    - Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
     - `roll help` will respond with a help message that explains the syntax with examples.
-    - Valid roll respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message.
+    - Valid rolls respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message indicated the total value of the roll, what roll is operated on, individual roll values, and the modifier applied.
 
 ## Contributing
 
