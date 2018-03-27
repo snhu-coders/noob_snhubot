@@ -25,6 +25,25 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
     - `roll help` will respond with a help message that explains the syntax with examples.
     - Valid rolls respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message indicated the total value of the roll, what roll is operated on, individual roll values, and the modifier applied.
 
+### Modular Commands
+Commands are now modular! In order to use them, the command script must follow particular guidelines.
+* `command` variable
+    - The `command` variable must be defined. It is used to identify the command trigger for the bot.
+* `execute(command, user)`
+    - The `execute()` function must be defined and accept `command` and `user` variables from the bot.
+    - The `execute()` function must return `response` and `attachment`. These can be set to `None`.
+
+#### Command Module Example
+```python
+command = "test"
+
+def execute(command, user):
+    attachment = None
+    response = "This is just an example."
+
+    return response, attachment
+```
+
 ## Contributing
 
 If you'd like to contribute, join us on the Slack workspace mentioned above. All SNHU students are welcome.
