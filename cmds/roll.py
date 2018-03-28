@@ -8,6 +8,7 @@ def execute(command, user):
     ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
     roll = command.split()
 
+    attachment = None
     response = "That roll is not valid. Try `@Noob SNHUbot roll help`"   
 
     if len(roll) > 1:
@@ -36,7 +37,6 @@ def execute(command, user):
                     else:
                         total -= mod            
                 
-                attach = True
                 attachment = json.dumps([
                     {
                         "text":"<@{}> rolled *{}*".format(user, total),
