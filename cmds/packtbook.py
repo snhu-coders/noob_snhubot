@@ -8,10 +8,11 @@ from urllib.request import urlopen
 
 command = 'packtbook'
 
-def execute(command, user):
+def execute(command, user):    
     response = None
     attachment = None
     mini = False
+    url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
     # Optional mini output
     if len(command.split()) > 1:
@@ -20,50 +21,50 @@ def execute(command, user):
         if arg.lower() == "mini":
             mini = True
     
-    url = 'https://www.packtpub.com/packt/offers/free-learning/' 
-    soup = BeautifulSoup(urlopen(url), 'html.parser')
-    
-    # Grab the book title
-    book_box = soup.find('div', attrs={'class':'dotd-title'})
-    book_title = book_box.text.strip()
+    # Simple catch all error logic
+    try:
+        soup = BeautifulSoup(urlopen(url), 'html.parser')
 
-    # Grab the book image
-    book_img = soup.find('img', attrs={'class':'bookimage'})
-    book_img_src = book_img['src'].strip().replace(' ', '%20')
+        # Grab the book title
+        book_box = soup.find('div', attrs={'class':'dotd-title'})
+        book_title = book_box.text.strip()
 
-    # Grab the timestamp
-    book_expires = soup.find('span', attrs={'class':'packt-js-countdown'})
-    expires_time = datetime.datetime.fromtimestamp(int(book_expires['data-countdown-to']))
-    cur_time = datetime.datetime.fromtimestamp(int(time.time()))
-    time_diff = expires_time - cur_time
+        # Grab the book image
+        book_img = soup.find('img', attrs={'class':'bookimage'})
+        book_img_src = book_img['src'].strip().replace(' ', '%20')
 
-    time_string = "time"
-    
-    # Figure the time out
-    if str(time_diff).count(":") == 2:
-        h, m, s = str(time_diff).split(":")
+        # Grab the timestamps
+        book_expires = soup.find('span', attrs={'class':'packt-js-countdown'})
+        expires_time = datetime.datetime.fromtimestamp(int(book_expires['data-countdown-to']))
+        cur_time = datetime.datetime.fromtimestamp(int(time.time()))        
+        
+        # Figure out time output (handles plurals)
+        attrs = ['hours', 'minutes', 'seconds']
+        human_readable = lambda delta: ['{} {}'.format(
+            getattr(delta, attr),
+            getattr(delta, attr) > 1 and attr or attr[:-1])
+            for attr in attrs if getattr(delta, attr)]
+        
+        time_diff = relativedelta(expires_time, cur_time)
+        times = human_readable(time_diff)
 
-        time_string = "{} hours, {} minutes, and {} seconds".format(h, m, s)
+        time_string = "{}, {}, and {}".format(*times)
 
-    if mini:
-        attachment = json.dumps([
-        {
-            "pretext":"The Packt Free Book of the Day is:",
-            "title":book_title,
-            "title_link":url,
-			"footer":"There's still {} to get this book!".format(time_string),
-			"thumb_url":"https:{}".format(book_img_src),
-            "color":"#ffca5b"
-        }])
-    else:
-        attachment = json.dumps([
-            {
-                "pretext":"The Packt Free Book of the Day is:",
+        output = {"pretext":"The Packt Free Book of the Day is:",
                 "title":book_title,
                 "title_link":url,
-                "footer":"There's still {} to get this book!".format(time_string),
-                "image_url":"https:{}".format(book_img_src),
-                "color":"#ffca5b"
-            }])
+                "footer":"There's still {} to get this book!".format(time_string),                
+                "color":"#ffca5b"}
+        
+        if mini:
+            output['thumb_url'] = "https:{}".format(book_img_src)
+        else:
+            output['image_url'] = "https:{}".format(book_img_src)
+
+        attachment = json.dumps([output])
+
+    except:
+        # TODO: For some reason this link won't unfurl in Slack
+        response = 'I have failed my human overlords!\nYou should be able to find the Packt Free Book of the day here: {}'.format(url)
 
     return response, attachment
