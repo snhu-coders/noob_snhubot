@@ -13,17 +13,21 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * do
    - Basic command from tutorial.
    - Responds with: _"Sure...write some more code then I can do that!"_
-* what's my name?
-   - Simple call and response.
-   - Resonds with: _"Your name is `<@{name}>`! Did you forget or something?"_
-* what is the airspeed velocity of an unladen swallow?
-   - A clever joke.
-   - Responds with a Youtube video to a Monty Python and the Holy Grail clip.
+* packtbook
+    - Reaches out to the Packtbook Website to display the latest free book of the day.
+    - `packtbook mini` will show the attachment in a smaller format.
 * roll `XdY[±Z]`
     - Rolls X number of Y-Sided dice with a + or - Z modifier!
     - Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
     - `roll help` will respond with a help message that explains the syntax with examples.
     - Valid rolls respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message indicated the total value of the roll, what roll is operated on, individual roll values, and the modifier applied.
+* what is the airspeed velocity of an unladen swallow?
+   - A clever joke.
+   - Responds with a Youtube video to a Monty Python and the Holy Grail clip.
+* what's my name?
+   - Simple call and response.
+   - Resonds with: _"Your name is `<@{name}>`! Did you forget or something?"_
+
 
 ### Modular Commands
 Commands are now modular! In order to use them, the command script must follow particular guidelines.
