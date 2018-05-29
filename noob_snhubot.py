@@ -35,7 +35,7 @@ def parse_bot_commands(slack_events):
             if user_id == bot_id:
                 return message, event["channel"], event["user"]
         elif event["type"] == "team_join":
-            return "greet user test", None, event["user"].get("id")
+            return "greet user", None, event["user"].get("id")
     
     return None, None, None
 
@@ -59,17 +59,24 @@ def handle_command(command, channel, user):
     response = None    
     attachment = None
 
-    print("Recieved command '{}' from user: {}".format(command, user))
+    print("Recieved command '{}' from user: {} on channel: {}".format(command, user, channel))
 
     # iterate over commands and execute
     for k, v in cmds.COMMANDS.items():        
         if command.lower().startswith(v):            
             cmd = getattr(getattr(cmds, k), 'execute')
-            response, attachment = cmd(command, user)
+            
+            # if a channel has been defined, run normal,
+            # otherwise expect channel return
+            #if command.lower().startswith("greet user"):
+            if channel == None or command.lower().startswith("greet user"):            
+                response, channel = cmd(command, user)
+            else:
+                response, attachment = cmd(command, user)
 
-    # if send msg
-    if command.lower().startswith("greet user test"): #and channel == None:
-        response, channel = greet_user(user)
+    # if greet user
+    #if command.lower().startswith("greet user") and channel == None:
+    #    response, channel = greet_user(user)
     
     # Sends the response back to the channel
     if attachment:
@@ -86,58 +93,6 @@ def handle_command(command, channel, user):
             channel=channel,
             text=response or default_response
         )
-
-def greet_user(user):
-    # Get IM list
-    team_info = slack_client.api_call("team.info")
-    channels_info = slack_client.api_call("channels.list")
-    channels = {} # dictionary for listing all channels in workspace
-
-    # Set the Team Name
-    if team_info.get("ok"):
-        team_name = team_info.get("team").get("name")
-    else:
-        team_name = "snhu_coders"
-
-    # Get the channels list and prep for mention expantion
-    if channels_info.get("ok"):
-        for channel in channels_info.get("channels"):
-            id = channel.get("id")
-            name = channel.get("name")
-            purpose = channel.get("purpose").get("value")
-
-            if name == "general":
-                general = id
-
-            channels[id] = purpose # Add new dictionary item with purpose
-
-    # Process channels dictionary for output
-    channel_output = ""
-    for k, v in channels.items():
-        channel_output += "<#{}>: {}\n".format(k, v)
-
-    # open the IM channel to the new user
-    im_channel = slack_client.api_call("im.open", user=user)
-
-    print("IM CHANNEL:")
-    print(im_channel)
-
-    greeting = """
-Welcome to {0}, <@{1}>! I am <@{2}>, your friendly protocol droid. Feel free to learn more about me by saying `<@{2}> help` in any channel I'm active in.
-
-We're so happy that you've joined us. Please introduce yourself in <#{3}>, and let us know what brings you to the team!
-
-If you're new to Slack, please check out the <https://get.slack.help/hc/en-us/articles/217626358-Tour-the-Slack-app#windows-app-1|Slack Tour>.
-A handy feature of Slack is the ability to <https://get.slack.help/hc/en-us/articles/204145658-Create-a-snippet|Create a Snippet>.
-
-Here's a detailed list of our channels for your convenience. You've been automatically joined to some of these.
-Click on the links to view the channels and start chatting!
-{4}
-""".format(team_name, user, bot_id, general, channel_output)
-
-    # Return the new greeting and send private message    
-    return greeting, im_channel.get("channel").get("id") if im_channel.get("ok") else (None, None)
-
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
