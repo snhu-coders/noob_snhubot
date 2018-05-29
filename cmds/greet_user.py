@@ -39,15 +39,16 @@ def execute(command, user):
     print(im_channel)
 
     greeting = """
-Welcome to {0}, <@{1}>! I am <@{2}>, your friendly protocol droid. Feel free to learn more about me by saying `<@{2}> help` in any channel I'm active in.
+_Welcome to *{0}*, <@{1}>!_ 
+We're so happy that you've joined our community! Please introduce yourself in <#{3}>, and let us know what brings you to the team! 
+*{0}* is a place for people to _*learn*_, _*collaborate*_, _*network*_, and just hang out. Please be kind to each other, and encourage learning! Don't give away, nor expect, direct answers to homework assignments.
 
-We're so happy that you've joined us. Please introduce yourself in <#{3}>, and let us know what brings you to the team! 
-{0} is a place for people to _*learn*_, _*collaborate*_, _*network*_, and just hang out. Please be kind to each other, and encourage learning! Don't give away, nor expect, direct answers to homework assignments.
+I am <@{2}>, your friendly protocol droid. Feel free to learn more about me by saying `<@{2}> help` in any channel I'm active in.
 
-If you're new to Slack, please check out the <https://get.slack.help/hc/en-us/articles/217626358-Tour-the-Slack-app#windows-app-1|Slack Tour>.
-A handy feature of Slack is the ability to <https://get.slack.help/hc/en-us/articles/204145658-Create-a-snippet|Create a Snippet>.
+_If you're new to Slack_, please check out the <https://get.slack.help/hc/en-us/articles/217626358-Tour-the-Slack-app#windows-app-1|Slack Tour>.
+_A handy feature of Slack_ is the ability to <https://get.slack.help/hc/en-us/articles/204145658-Create-a-snippet|Create a Snippet>.
 
-Here's a detailed list of our channels for your convenience. You've been automatically joined to some of these.
+_*Here's a detailed list of our channels for your convenience.*_ You've been automatically joined to some of these.
 Click on the links to view the channels and start chatting!
 {4}
 """.format(team_name, user, bot_id, general, channel_output)
