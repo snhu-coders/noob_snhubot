@@ -34,6 +34,8 @@ def parse_bot_commands(slack_events):
             user_id, message = parse_direct_mention(event["text"])
             if user_id == bot_id:
                 return message, event["channel"], event["user"]
+        elif event["type"] == "team_join":
+            return "greet user", None, event["user"].get("id")
     
     return None, None, None
 
@@ -57,13 +59,24 @@ def handle_command(command, channel, user):
     response = None    
     attachment = None
 
-    print("Recieved command '{}' from user: {}".format(command, user))
-    
+    print("Recieved command '{}' from user: {} on channel: {}".format(command, user, channel))
+
     # iterate over commands and execute
     for k, v in cmds.COMMANDS.items():        
         if command.lower().startswith(v):            
             cmd = getattr(getattr(cmds, k), 'execute')
-            response, attachment = cmd(command, user)           
+            
+            # if a channel has been defined, run normal,
+            # otherwise expect channel return
+            #if command.lower().startswith("greet user"):
+            if channel == None or command.lower().startswith("greet user"):            
+                response, channel = cmd(command, user)
+            else:
+                response, attachment = cmd(command, user)
+
+    # if greet user
+    #if command.lower().startswith("greet user") and channel == None:
+    #    response, channel = greet_user(user)
     
     # Sends the response back to the channel
     if attachment:
@@ -80,7 +93,6 @@ def handle_command(command, channel, user):
             channel=channel,
             text=response or default_response
         )
-
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
