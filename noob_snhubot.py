@@ -1,7 +1,9 @@
 import os
+import sys
 import time
 import re
 import json
+import websocket._exceptions as ws_exceptions
 from slackclient import SlackClient
 
 # Import bot cmds
@@ -95,15 +97,39 @@ def handle_command(command, channel, user):
         )
 
 if __name__ == "__main__":
-    if slack_client.rtm_connect(with_team_state=False):
-        print("Noob SNHUbot connected and running!")
-        # Read bot's user id by calling Web API method 'auth.test'
-        bot_id = slack_client.api_call("auth.test")["user_id"]
-        while True:
-            command, channel, user = parse_bot_commands(slack_client.rtm_read())
-            if command:
-                handle_command(command, channel, user)
-            time.sleep(RTM_READ_DELAY)
-    else:
-        print("Connection failed. Exception traceback printed above.")
+    # main loop to reconnect bot if necessary
+    while True:
+        #if slack_client.rtm_connect(with_team_state=False):
+        if slack_client.rtm_connect(with_team_state=False):
+            print("Noob SNHUbot connected and running!")
+            
+            # Read bot's user id by calling Web API method 'auth.test'
+            bot_id = slack_client.api_call("auth.test")["user_id"]        
+
+            print("Bot ID: " + bot_id)
+            
+            while True:
+                # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
+                try:
+                    command, channel, user = parse_bot_commands(slack_client.rtm_read())
+
+                    if command:
+                        handle_command(command, channel, user)
+                    time.sleep(RTM_READ_DELAY)                
+                except TimeoutError as err:
+                    print("Timeout Error occurred.\n{}".format(err))
+                except ws_exceptions.WebSocketConnectionClosedException as err:
+                    print("Connection is closed.\n{}\n{}".format(err, *sys.exc_info()[0:]))                    
+                    break
+                except ConnectionResetError as err:
+                    print("Connection has been reset.\n{}\n{}".format(err, *sys.exc_info()[0:]))
+                    break
+                except:
+                    print("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
+                    sys.exit()
+        else:
+            print("Connection failed. Exception traceback printed above.")
+            break
+
+        print("Reconnecting...")
     
