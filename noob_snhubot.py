@@ -55,7 +55,7 @@ def handle_command(command, channel, user):
         Executes bot command if the command is known
     """
     # Default response is help text for the user    
-    default_response = "I don't understand. Here's a few things my human overlords have allowed me to do: \n`{}`.".format(", ".join(commands))
+    default_response = "Does not compute. Try `<@{}> help` for command information.".format(bot_id)
 
     # Finds and executes the given command, filling in response
     response = None    
