@@ -3,6 +3,7 @@ import random
 import json
 
 command = "roll"
+public = True
 
 def execute(command, user):
     from noob_snhubot import bot_id

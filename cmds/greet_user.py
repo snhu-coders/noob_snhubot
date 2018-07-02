@@ -1,5 +1,6 @@
 
 command = "greet user"
+public = False
 
 def execute(command, user):
     # import on execution
@@ -37,8 +38,8 @@ def execute(command, user):
     # open the IM channel to the new user
     im_channel = slack_client.api_call("im.open", user=user)
 
-    print("IM CHANNEL:")
-    print(im_channel)
+    #print("IM CHANNEL:")
+    #print(im_channel)
 
     greeting = """
 _Welcome to *{0}*, <@{1}>!_ 

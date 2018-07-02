@@ -1,5 +1,6 @@
 
 command = "help"
+public = True
 
 def execute(command, user):
     # import on execution

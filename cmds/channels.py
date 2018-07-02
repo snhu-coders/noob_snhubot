@@ -1,5 +1,7 @@
+import json
 
 command = "channels"
+public = True
 
 def execute(command, user):
     # import on execution
@@ -18,11 +20,27 @@ def execute(command, user):
             channels[id] = purpose # Add new dictionary item with purpose
 
     # Process channels dictionary for output
+    #Trying to make a pretty table attachment
+    #fields = []
+    #for k, v in channels.items():
+    #    fields.append({"title": "<#{}>".format(k), "value": "{}".format(v)})
+    #
+    #output = {
+    #    "link_names": 1,
+    #    "parse": "full",
+    #    "pretext": "_*Here's a detailed list of our channels for your convenience.*_",
+    #    "text": "Click on the links to view the channels and start chatting!",
+    #    "fields": fields
+    #}
+    #
+    #attachment = json.dumps([output])
+    attachment = None
+    response = None
+    
     channel_output = ""
     for k, v in channels.items():
         channel_output += "<#{}>: {}\n".format(k, v)
-
-    attachment = None
+        
     response = """
 _*Here's a detailed list of our channels for your convenience.*_
 Click on the links to view the channels and start chatting!
