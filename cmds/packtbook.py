@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from urllib.request import urlopen
 
 command = 'packtbook'
+public = True
 
 def execute(command, user):    
     response = None
@@ -32,6 +33,11 @@ def execute(command, user):
         # Grab the book image
         book_img = soup.find('img', attrs={'class':'bookimage'})
         book_img_src = book_img['src'].strip().replace(' ', '%20')
+        # format book image
+        if book_img_src.lower().startswith("//"):
+            book_img_src = "https" + book_img_src
+        elif not book_img_src.lower().startswith("https://"):
+            book_img_src = "https://" + book_img_src
 
         # Grab the timestamps
         book_expires = soup.find('span', attrs={'class':'packt-js-countdown'})
@@ -57,9 +63,9 @@ def execute(command, user):
                 "color":"#ffca5b"}
         
         if mini:
-            output['thumb_url'] = "https:{}".format(book_img_src)
+            output['thumb_url'] = "{}".format(book_img_src)
         else:
-            output['image_url'] = "https:{}".format(book_img_src)
+            output['image_url'] = "{}".format(book_img_src)
 
         attachment = json.dumps([output])
 

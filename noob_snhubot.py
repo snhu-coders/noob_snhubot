@@ -35,11 +35,11 @@ def parse_bot_commands(slack_events):
         if event["type"] == "message" and not "subtype" in event:
             user_id, message = parse_direct_mention(event["text"])
             if user_id == bot_id:
-                return message, event["channel"], event["user"]
+                return message, event["channel"], event["user"], event["type"]
         elif event["type"] == "team_join":
-            return "greet user", None, event["user"].get("id")
+            return "greet user", None, event["user"].get("id"), event["type"]
     
-    return None, None, None
+    return None, None, None, None
 
 def parse_direct_mention(message_text):
     """
@@ -50,35 +50,34 @@ def parse_direct_mention(message_text):
     # the first group contains the username, the second groups contains the remaining message
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
-def handle_command(command, channel, user):
+def execute_command(command, commands, user):
+    response1 = None
+    response2 = None
+    
+    for k, v in commands:     
+        if command.lower().startswith(v):
+            cmd = getattr(getattr(cmds, k), 'execute')
+            
+            response1, response2 = cmd(command, user)
+
+    return response1, response2
+
+def handle_command(command, channel, user, msg_type):
     """
         Executes bot command if the command is known
     """
     # Default response is help text for the user    
-    default_response = "I don't understand. Here's a few things my human overlords have allowed me to do: \n`{}`.".format(", ".join(commands))
+    default_response = "Does not compute. Try `<@{}> help` for command information.".format(bot_id)
 
-    # Finds and executes the given command, filling in response
-    response = None    
+    response = None
     attachment = None
 
     print("Recieved command '{}' from user: {} on channel: {}".format(command, user, channel))
 
-    # iterate over commands and execute
-    for k, v in cmds.COMMANDS.items():        
-        if command.lower().startswith(v):            
-            cmd = getattr(getattr(cmds, k), 'execute')
-            
-            # if a channel has been defined, run normal,
-            # otherwise expect channel return
-            #if command.lower().startswith("greet user"):
-            if channel == None or command.lower().startswith("greet user"):            
-                response, channel = cmd(command, user)
-            else:
-                response, attachment = cmd(command, user)
-
-    # if greet user
-    #if command.lower().startswith("greet user") and channel == None:
-    #    response, channel = greet_user(user)
+    if msg_type == "message":
+        response, attachment = execute_command(command, cmds.COMMANDS.items(), user)
+    else:
+        response, channel = execute_command(command, cmds.COMMANDS_HIDDEN.items(), user)
     
     # Sends the response back to the channel
     if attachment:
@@ -111,10 +110,10 @@ if __name__ == "__main__":
             while True:
                 # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
                 try:
-                    command, channel, user = parse_bot_commands(slack_client.rtm_read())
+                    command, channel, user, msg_type = parse_bot_commands(slack_client.rtm_read())
 
                     if command:
-                        handle_command(command, channel, user)
+                        handle_command(command, channel, user, msg_type)
                     time.sleep(RTM_READ_DELAY)                
                 except TimeoutError as err:
                     print("Timeout Error occurred.\n{}".format(err))

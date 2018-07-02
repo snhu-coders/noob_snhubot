@@ -1,5 +1,6 @@
 
 command = "what's my name?"
+public = True
 
 def execute(command, user):
     attachment = None

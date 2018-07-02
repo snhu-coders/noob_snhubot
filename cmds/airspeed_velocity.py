@@ -1,5 +1,6 @@
 
 command = "what is the airspeed velocity of an unladen swallow?"
+public = True
 
 def execute(command, user):
     attachment = None

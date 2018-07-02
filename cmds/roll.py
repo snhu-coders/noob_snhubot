@@ -3,13 +3,16 @@ import random
 import json
 
 command = "roll"
+public = True
 
 def execute(command, user):
+    from noob_snhubot import bot_id
+
     ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
     roll = command.split()
 
     attachment = None
-    response = "That roll is not valid. Try `@Noob SNHUbot roll help`"   
+    response = "That roll is not valid. Try `<@{}> roll help`".format(bot_id)
 
     if len(roll) > 1:
         roll = command.split()[1]

@@ -5,4 +5,5 @@ Scripts/
 tcl/
 __pycache__/
 
+test_cmd.py
 pip-selfcheck.json
