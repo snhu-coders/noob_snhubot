@@ -1,8 +1,12 @@
-import os
-import sys
-import time
-import re
+import datetime
 import json
+import os
+import re
+import sched
+import sys
+import threading
+import time
+
 import websocket._exceptions as ws_exceptions
 from slackclient import SlackClient
 
@@ -22,8 +26,13 @@ bot_id = None
 RTM_READ_DELAY = 1
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
+SCHED = sched.scheduler(time.time, time.sleep)
+
 commands = list(cmds.COMMANDS.values())
 commands.sort()
+
+def schedule_packtbook():
+    if SCHED.queue
 
 def parse_bot_commands(slack_events):
     """
@@ -131,4 +140,3 @@ if __name__ == "__main__":
             break
 
         print("Reconnecting...")
-    
