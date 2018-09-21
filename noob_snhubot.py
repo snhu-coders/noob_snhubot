@@ -1,20 +1,20 @@
 import datetime
-import json
-import os
 import re
 import sched
 import sys
 import threading
 import time
-
 import websocket._exceptions as ws_exceptions
+
+from os import environ
+
 from slackclient import SlackClient
 
 # Import bot cmds
 import cmds
 
 # create env variable with client_id in it
-client_id = os.environ["SLACK_CLIENT"]
+client_id = environ["SLACK_CLIENT"]
 
 # create new Slack Client object
 slack_client = SlackClient(client_id)
@@ -36,13 +36,7 @@ def sched_has_task(task) -> bool:
     """
     Returns true or false if the a task is currently scheduled
     """
-    return any([task in v['arguments'] for v in SCHED.values()])
-    
-    # for v in SCHED.values():
-    #     if task in v['arguments']:
-    #         return True
-    
-    # return False
+    return any([task in v['arguments'] for v in SCHED.values()])    
 
 def cleanup_sched():
     """
@@ -114,6 +108,7 @@ def parse_direct_mention(message_text):
         was mentioned. If there is no direct mentions, returns None
     """
     matches = re.search(MENTION_REGEX, message_text)
+
     # the first group contains the username, the second groups contains the remaining message
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
@@ -168,25 +163,24 @@ def handle_command(command, channel, user, msg_type):
         )
 
 def main():
+    '''
+    Primary logic loop.
+    '''
     # main loop to reconnect bot if necessary
     while True:
         #if slack_client.rtm_connect(with_team_state=False):
         if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):
             print("Noob SNHUbot connected and running!")
             
-            # Read bot's user id by calling Web API method 'auth.test'
+            # pull global bot_id into scope
+            global bot_id
+            
+            # Read bot's user id by calling Web API method 'auth.test'            
             bot_id = slack_client.api_call("auth.test")["user_id"]        
 
             print("Bot ID: " + bot_id)
             
-            
-            # replace with slack_client.server.connected
-            #while slack_client.server.connected:
-
-            
-            while True:
-                #cleanup_sched()
-                
+            while slack_client.server.connected:
                 # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
                 try:
                     command, channel, user, msg_type = parse_bot_commands(slack_client.rtm_read())
@@ -207,15 +201,12 @@ def main():
                     sys.exit()
 
                 # Keep scheduling the task
-                #if not sched_has_task('packtbook'):
-                #    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(21, 30))
-                    #datetime.time.now() + datetime.timedelta(mins=5)
-                    #d = datetime.datetime.now() + datetime.timedelta(seconds=15)
-                    #schedule_cmd('packtbook', 'C93JZKLLA', d.time())
+                if not sched_has_task('packtbook'):
+                    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 30))
 
                 # Execute clean up only when tasks have been scheduled
-                #if SCHED:
-                #    cleanup_sched()
+                if SCHED:
+                    cleanup_sched()
                     
         else:
             print("Connection failed. Exception traceback printed above.")
@@ -224,4 +215,5 @@ def main():
         print("Reconnecting...")    
 
 if __name__ == "__main__":
+    # execute only if run as script
     main()
