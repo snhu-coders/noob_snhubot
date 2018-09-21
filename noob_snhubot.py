@@ -26,13 +26,71 @@ bot_id = None
 RTM_READ_DELAY = 1
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-SCHED = sched.scheduler(time.time, time.sleep)
+# Dictionary of scheduled events
+SCHED = {}
 
 commands = list(cmds.COMMANDS.values())
 commands.sort()
 
-def schedule_packtbook():
-    if SCHED.queue
+def sched_has_task(task) -> bool:
+    """
+    Returns true or false if the a task is currently scheduled
+    """
+    return any([task in v['arguments'] for v in SCHED.values()])
+    
+    # for v in SCHED.values():
+    #     if task in v['arguments']:
+    #         return True
+    
+    # return False
+
+def cleanup_sched():
+    """
+    Removes expired events when their threds become inactive
+    """
+    sched = list(SCHED.items())
+
+    for k, v in sched:
+        if not v['thread'].is_alive():
+            SCHED.pop(k, None)
+
+
+def schedule_cmd(command, channel, sched_time, user_id = bot_id, event_type = 'message'):
+    """
+    Scheduled a bot command for execution at a specific time
+    """
+    s = sched.scheduler(time.time, datetime.timedelta)
+
+    now_time = datetime.datetime.now().time()
+    sched_date = datetime.date.today()
+
+    if now_time > sched_time:
+        sched_date += datetime.timedelta(days=1)
+
+    sched_combine = datetime.datetime.combine(sched_date, sched_time)
+
+    # Add the task to the scheduler
+    task = s.enterabs(
+        sched_combine.timestamp(), 
+        1, 
+        handle_command,
+        (command, channel, bot_id, event_type)
+    )
+
+    # Spawn a thread daemon to handle the task
+    t = threading.Thread(target=s.run)
+    t.daemon = True
+    t.start()
+
+    # Add task to SCHED
+    SCHED[t.ident] = {
+        'thread': t,
+        'time': task.time, 
+        'function': task.action.__name__, 
+        'arguments': task.argument
+    }
+
+    print(task) 
 
 def parse_bot_commands(slack_events):
     """
@@ -60,6 +118,11 @@ def parse_direct_mention(message_text):
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
 def execute_command(command, commands, user):
+    """
+    Executes the command and returns responses received from command output
+
+    Respones can be response, attachment, or channels, depending on command executed
+    """
     response1 = None
     response2 = None
     
@@ -104,11 +167,11 @@ def handle_command(command, channel, user, msg_type):
             text=response or default_response
         )
 
-if __name__ == "__main__":
+def main():
     # main loop to reconnect bot if necessary
     while True:
         #if slack_client.rtm_connect(with_team_state=False):
-        if slack_client.rtm_connect(with_team_state=False):
+        if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):
             print("Noob SNHUbot connected and running!")
             
             # Read bot's user id by calling Web API method 'auth.test'
@@ -116,7 +179,14 @@ if __name__ == "__main__":
 
             print("Bot ID: " + bot_id)
             
+            
+            # replace with slack_client.server.connected
+            #while slack_client.server.connected:
+
+            
             while True:
+                #cleanup_sched()
+                
                 # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
                 try:
                     command, channel, user, msg_type = parse_bot_commands(slack_client.rtm_read())
@@ -135,8 +205,23 @@ if __name__ == "__main__":
                 except:
                     print("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
                     sys.exit()
+
+                # Keep scheduling the task
+                #if not sched_has_task('packtbook'):
+                #    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(21, 30))
+                    #datetime.time.now() + datetime.timedelta(mins=5)
+                    #d = datetime.datetime.now() + datetime.timedelta(seconds=15)
+                    #schedule_cmd('packtbook', 'C93JZKLLA', d.time())
+
+                # Execute clean up only when tasks have been scheduled
+                #if SCHED:
+                #    cleanup_sched()
+                    
         else:
             print("Connection failed. Exception traceback printed above.")
             break
 
-        print("Reconnecting...")
+        print("Reconnecting...")    
+
+if __name__ == "__main__":
+    main()
