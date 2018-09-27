@@ -1,8 +1,6 @@
 import datetime
 import re
-import sched
 import sys
-import threading
 import time
 import websocket._exceptions as ws_exceptions
 
@@ -33,43 +31,11 @@ scheduler = Scheduler()
 commands = list(cmds.COMMANDS.values())
 commands.sort()
 
-def schedule_cmd(command, channel, sched_time, user_id = bot_id, event_type = 'message'):
-    """
-    Scheduled a bot command for execution at a specific time
-    """
-    s = sched.scheduler(time.time, datetime.timedelta)
-
-    now_time = datetime.datetime.now().time()
-    sched_date = datetime.date.today()
-
-    if now_time > sched_time:
-        sched_date += datetime.timedelta(days=1)
-
-    sched_combine = datetime.datetime.combine(sched_date, sched_time)
-
-    # Add the task to the scheduler
-    task = s.enterabs(
-        sched_combine.timestamp(), 
-        1, 
-        handle_command,
-        (command, channel, bot_id, event_type)
-    )
-
-    # Spawn a thread daemon to handle the task
-    t = threading.Thread(target=s.run)
-    t.daemon = True
-    t.start()
-
-    # Add task to SCHED
-    scheduler.add_task(t.ident, t, task.time, task.action.__name__, task.argument)
-
-    print(task) 
-
 def parse_bot_commands(slack_events):
     """
-        Parses a list of events coming from the Slack RTM API to find bot commands.
-        If a bot command is found, this function returns a tuple of command and channel.
-        If it's not found, then this function returns None, None.
+    Parses a list of events coming from the Slack RTM API to find bot commands.
+    If a bot command is found, this function returns a tuple of command and channel.
+    If it's not found, then this function returns None, None.
     """
     for event in slack_events:
         if event["type"] == "message" and not "subtype" in event:
@@ -83,8 +49,8 @@ def parse_bot_commands(slack_events):
 
 def parse_direct_mention(message_text):
     """
-        Finds a direct mention in message text and returns the user ID which 
-        was mentioned. If there is no direct mentions, returns None
+    Finds a direct mention in message text and returns the user ID which 
+    was mentioned. If there is no direct mentions, returns None
     """
     matches = re.search(MENTION_REGEX, message_text)
 
@@ -110,7 +76,7 @@ def execute_command(command, commands, user):
 
 def handle_command(command, channel, user, msg_type):
     """
-        Executes bot command if the command is known
+    Executes bot command if the command is known
     """
     # Default response is help text for the user    
     default_response = "Does not compute. Try `<@{}> help` for command information.".format(bot_id)
@@ -142,9 +108,9 @@ def handle_command(command, channel, user, msg_type):
         )
 
 def main():
-    '''
+    """
     Primary logic loop.
-    '''
+    """
     # main loop to reconnect bot if necessary
     while True:
         #if slack_client.rtm_connect(with_team_state=False):
@@ -181,7 +147,7 @@ def main():
 
                 # Keep scheduling the task
                 if not scheduler.has_task('packtbook'):
-                    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 39))
+                    scheduler.schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 30), handle_command, bot_id)
 
                 # Execute clean up only when tasks have been scheduled
                 if scheduler.sched:
