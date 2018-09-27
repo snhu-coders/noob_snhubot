@@ -9,6 +9,7 @@ import websocket._exceptions as ws_exceptions
 from os import environ
 
 from slackclient import SlackClient
+from bot_sched import Scheduler
 
 # Import bot cmds
 import cmds
@@ -26,28 +27,11 @@ bot_id = None
 RTM_READ_DELAY = 1
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-# Dictionary of scheduled events
-SCHED = {}
+# Scheduled events
+scheduler = Scheduler()
 
 commands = list(cmds.COMMANDS.values())
 commands.sort()
-
-def sched_has_task(task) -> bool:
-    """
-    Returns true or false if the a task is currently scheduled
-    """
-    return any([task in v['arguments'] for v in SCHED.values()])    
-
-def cleanup_sched():
-    """
-    Removes expired events when their threds become inactive
-    """
-    sched = list(SCHED.items())
-
-    for k, v in sched:
-        if not v['thread'].is_alive():
-            SCHED.pop(k, None)
-
 
 def schedule_cmd(command, channel, sched_time, user_id = bot_id, event_type = 'message'):
     """
@@ -77,12 +61,7 @@ def schedule_cmd(command, channel, sched_time, user_id = bot_id, event_type = 'm
     t.start()
 
     # Add task to SCHED
-    SCHED[t.ident] = {
-        'thread': t,
-        'time': task.time, 
-        'function': task.action.__name__, 
-        'arguments': task.argument
-    }
+    scheduler.add_task(t.ident, t, task.time, task.action.__name__, task.argument)
 
     print(task) 
 
@@ -201,12 +180,12 @@ def main():
                     sys.exit()
 
                 # Keep scheduling the task
-                if not sched_has_task('packtbook'):
-                    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 30))
+                if not scheduler.has_task('packtbook'):
+                    schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 39))
 
                 # Execute clean up only when tasks have been scheduled
-                if SCHED:
-                    cleanup_sched()
+                if scheduler.sched:
+                    scheduler.cleanup_sched()
                     
         else:
             print("Connection failed. Exception traceback printed above.")
