@@ -145,8 +145,8 @@ def main():
                     print("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
                     sys.exit()
 
-                # Keep scheduling the task
-                if not scheduler.has_task('packtbook'):
+                # Keep scheduling the task                
+                if not scheduler.has_task('packtbook', datetime.time(20, 30)):
                     scheduler.schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 30), handle_command, bot_id)
 
                 # Execute clean up only when tasks have been scheduled

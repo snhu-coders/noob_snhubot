@@ -8,10 +8,17 @@ class Scheduler:
     Maintains the scheduled processes for the bot application
     """
 
-    def has_task(self, task) -> bool:
+    _tasks = 0
+
+    def has_task(self, task, sched_time=None) -> bool:
         """
         Returns true or false if the a task is currently scheduled
-        """    
+        """            
+        if sched_time:
+            sched_combine = datetime.datetime.combine(self.get_sched_date(sched_time), sched_time)
+
+            return any([task in v['arguments'] and sched_combine.timestamp() == v['time'] for v in self.sched.values()])
+
         return any([task in v['arguments'] for v in self.sched.values()])    
 
     def cleanup_sched(self):
@@ -23,6 +30,9 @@ class Scheduler:
         for k, v in sched:
             if not v['thread'].is_alive():
                 self.sched.pop(k, None)
+                
+                self._tasks -= 1
+                print("Tasks:", self._tasks)
 
     def add_task(self, id, thread, time, function, arguments):
         """
@@ -35,20 +45,34 @@ class Scheduler:
             'arguments': arguments
         }
 
+        Scheduler._tasks += 1
+        print("Tasks:", Scheduler._tasks)
+
+    def passed_time(self, time):
+        """
+        Checks if a given time has passed for current day
+        """
+        return datetime.datetime.now().time() >= time
+
+    def get_sched_date(self, time):
+        """
+        Returns the date to schedule a task.
+        
+        Returns today if time has not passed, otherwise tomorrow
+        """
+        if self.passed_time(time):
+            return datetime.date.today() + datetime.timedelta(days=1)
+        
+        return datetime.date.today()
+
     def schedule_cmd(self, command, channel, sched_time, function, user_id, event_type='message'):
         """
         Scheduled a bot command for execution at a specific time
         """
 
-        s = sched.scheduler(time.time, datetime.timedelta)
+        s = sched.scheduler(time.time, datetime.timedelta)        
 
-        now_time = datetime.datetime.now().time()
-        sched_date = datetime.date.today()
-
-        if now_time > sched_time:
-            sched_date += datetime.timedelta(days=1)
-
-        sched_combine = datetime.datetime.combine(sched_date, sched_time)
+        sched_combine = datetime.datetime.combine(self.get_sched_date(sched_time), sched_time)
 
         # Add the task to the scheduler
         task = s.enterabs(
