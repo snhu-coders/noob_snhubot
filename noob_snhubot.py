@@ -7,7 +7,8 @@ import websocket._exceptions as ws_exceptions
 from os import environ
 
 from slackclient import SlackClient
-from bot_sched import Scheduler
+from BotHelper import Scheduler
+from BotHelper import MongoConnection
 
 # Import bot cmds
 import cmds
