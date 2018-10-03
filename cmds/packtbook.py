@@ -54,7 +54,8 @@ def execute(command, user):
         time_diff = relativedelta(expires_time, cur_time)
         times = human_readable(time_diff)
 
-        time_string = "{}, {}, and {}".format(*times)
+        time_string = ", ".join(times)
+        #time_string = {}, {}, and {}".format(*times)
 
         output = {"pretext":"The Packt Free Book of the Day is:",
                 "title":book_title,
@@ -69,7 +70,9 @@ def execute(command, user):
 
         attachment = json.dumps([output])
 
-    except:
+    except Exception as err:
+        print(err)
+
         # TODO: For some reason this link won't unfurl in Slack
         response = 'I have failed my human overlords!\nYou should be able to find the Packt Free Book of the day here: {}'.format(url)
 

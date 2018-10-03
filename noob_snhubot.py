@@ -1,16 +1,19 @@
-import os
+import datetime
+import re
 import sys
 import time
-import re
-import json
 import websocket._exceptions as ws_exceptions
+
+from os import environ
+
 from slackclient import SlackClient
+from bot_sched import Scheduler
 
 # Import bot cmds
 import cmds
 
 # create env variable with client_id in it
-client_id = os.environ["SLACK_CLIENT"]
+client_id = environ["SLACK_CLIENT"]
 
 # create new Slack Client object
 slack_client = SlackClient(client_id)
@@ -22,14 +25,17 @@ bot_id = None
 RTM_READ_DELAY = 1
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
+# Scheduled events
+scheduler = Scheduler()
+
 commands = list(cmds.COMMANDS.values())
 commands.sort()
 
 def parse_bot_commands(slack_events):
     """
-        Parses a list of events coming from the Slack RTM API to find bot commands.
-        If a bot command is found, this function returns a tuple of command and channel.
-        If it's not found, then this function returns None, None.
+    Parses a list of events coming from the Slack RTM API to find bot commands.
+    If a bot command is found, this function returns a tuple of command and channel.
+    If it's not found, then this function returns None, None.
     """
     for event in slack_events:
         if event["type"] == "message" and not "subtype" in event:
@@ -43,14 +49,20 @@ def parse_bot_commands(slack_events):
 
 def parse_direct_mention(message_text):
     """
-        Finds a direct mention in message text and returns the user ID which 
-        was mentioned. If there is no direct mentions, returns None
+    Finds a direct mention in message text and returns the user ID which 
+    was mentioned. If there is no direct mentions, returns None
     """
     matches = re.search(MENTION_REGEX, message_text)
+
     # the first group contains the username, the second groups contains the remaining message
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
 def execute_command(command, commands, user):
+    """
+    Executes the command and returns responses received from command output
+
+    Respones can be response, attachment, or channels, depending on command executed
+    """
     response1 = None
     response2 = None
     
@@ -64,7 +76,7 @@ def execute_command(command, commands, user):
 
 def handle_command(command, channel, user, msg_type):
     """
-        Executes bot command if the command is known
+    Executes bot command if the command is known
     """
     # Default response is help text for the user    
     default_response = "Does not compute. Try `<@{}> help` for command information.".format(bot_id)
@@ -95,19 +107,25 @@ def handle_command(command, channel, user, msg_type):
             text=response or default_response
         )
 
-if __name__ == "__main__":
+def main():
+    """
+    Primary logic loop.
+    """
     # main loop to reconnect bot if necessary
     while True:
         #if slack_client.rtm_connect(with_team_state=False):
-        if slack_client.rtm_connect(with_team_state=False):
+        if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):
             print("Noob SNHUbot connected and running!")
             
-            # Read bot's user id by calling Web API method 'auth.test'
+            # pull global bot_id into scope
+            global bot_id
+            
+            # Read bot's user id by calling Web API method 'auth.test'            
             bot_id = slack_client.api_call("auth.test")["user_id"]        
 
             print("Bot ID: " + bot_id)
             
-            while True:
+            while slack_client.server.connected:
                 # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
                 try:
                     command, channel, user, msg_type = parse_bot_commands(slack_client.rtm_read())
@@ -126,9 +144,21 @@ if __name__ == "__main__":
                 except:
                     print("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
                     sys.exit()
+
+                # Keep scheduling the task                
+                if not scheduler.has_task('packtbook', datetime.time(20, 30)):
+                    scheduler.schedule_cmd('packtbook', 'CB8B913T2', datetime.time(20, 30), handle_command, bot_id)
+
+                # Execute clean up only when tasks have been scheduled
+                if scheduler.sched:
+                    scheduler.cleanup_sched()
+                    
         else:
             print("Connection failed. Exception traceback printed above.")
             break
 
-        print("Reconnecting...")
-    
+        print("Reconnecting...")    
+
+if __name__ == "__main__":
+    # execute only if run as script
+    main()
