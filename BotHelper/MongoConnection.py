@@ -1,6 +1,7 @@
 from bson import json_util
 from bson import SON
-from pymongo import MongoClient
+from bson.objectid import ObjectId
+from pymongo import MongoClient, errors
 
 class MongoConnection:
     """ 
@@ -10,20 +11,28 @@ class MongoConnection:
     def __init__(self, db, collection, hostname='localhost', port=27017):
         """ Init with all data """
         self.client = self.connect_to_host(hostname, port)
-        self.db = self.use_db(db)
-        self.collection = self.use_collection(collection)
+        self.db = self.client[db]
+        self.collection = self.db[collection]
+
+        # Verify database has connected
+        try:
+            self.client.server_info()
+            self.connected = True
+        except errors.ServerSelectionTimeoutError as err:
+            print(err)
+            self.connected = False
 
     def connect_to_host(self, hostname, port):
         """ Connects to a MongoDB instance """
-        return MongoClient(hostname, port)
+        return MongoClient(hostname, port, serverSelectionTimeoutMS=10000)
     
     def use_db(self, db):
         """ Change database of current client """
-        return self.client[db]
+        self.db = self.client[db]
     
     def use_collection(self, collection):
         """ Change collection of current database """
-        return self.db[collection]
+        self.collection = self.db[collection]
 
     def find_document(self, query):
         """ Find a single document """  
@@ -59,7 +68,11 @@ class MongoConnection:
     
     def update_document(self, query, update):
         """ Update single document """
-        return self.collection.update_one(query, update)
+        return self.collection.update_one(query, update)    
+
+    def update_document_by_oid(self, oid, update):
+        """ Updates single document by ObjectId """
+        return self.update_document({"_id": ObjectId(oid)}, update)
 
     def update_documents(self, query, update):
         """ Update many document """
@@ -75,5 +88,4 @@ class MongoConnection:
 
     def aggregate_documents(self, pipeline):
         """ Performs an aggregation """
-        return json_util.loads(json_util.dumps(self.collection.aggregate(pipeline)))
-       
+        return json_util.loads(json_util.dumps(self.collection.aggregate(pipeline)))       
