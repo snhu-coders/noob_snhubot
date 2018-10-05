@@ -17,6 +17,7 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * packtbook
   * Reaches out to the Packtbook Website to display the latest free book of the day.
   * `packtbook mini` will show the attachment in a smaller format.
+  * Automatically scheduled to launch at 8:30PM Eastern Time.
 * roll `XdY[±Z]`
   * Rolls X number of Y-Sided dice with a + or - Z modifier!
   * Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
@@ -55,6 +56,32 @@ def execute(command, user):
 
     return response, attachment
 ```
+
+### Configuration
+The preferred method to configure the bot is now YAML. A `config.yml` in the root folder of the project
+should contain the client token and Mongo DB (optional) configurations.
+
+Sample `config.yml`:
+
+```yaml
+slackbot:
+  token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
+mongo:  
+  db: my_database
+  collections: 
+    conn: conn_log
+    cmds: cmd_log
+  hostname: my_db_server
+  port: 27017
+```
+
+Mongo DB logging is optional and can be omitted from the configuration file.
+
+Additionally, the `config.yml` file can be omitted to fall back on utilizing the `SLACK_CLIENT` environment variable.
+
+### Scheduled Tasks
+
+COMING SOON!
 
 ## Contributing
 
