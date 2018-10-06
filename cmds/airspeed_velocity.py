@@ -4,6 +4,6 @@ public = True
 
 def execute(command, user):
     attachment = None
-    response = "https://youtu.be/y2R3FvS4xr4?t=14s"
+    response = "https://youtu.be/_7iXw9zZrLo?t=182"
 
     return response, attachment
