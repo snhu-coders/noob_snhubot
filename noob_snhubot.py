@@ -18,8 +18,8 @@ try:
     with open("config.yml", 'r') as f:
         print(f"UTC: {datetime.datetime.utcnow().timestamp()} - Reading configuration in config.yml")
         CONFIG = yaml.load(f.read())
-        BOT_CONFIG = CONFIG['slackbot'] if CONFIG['slackbot'] else None
-        DB_CONFIG = CONFIG['mongo'] if CONFIG['mongo'] else None
+        BOT_CONFIG = CONFIG['slackbot'] if 'slackbot' in CONFIG.keys() else None
+        DB_CONFIG = CONFIG['mongo'] if 'mongo' in CONFIG.keys() else None
 except FileNotFoundError as err:
     print(f"UTC: {datetime.datetime.utcnow().timestamp()} - No configuration file detected")
     BOT_CONFIG = None
