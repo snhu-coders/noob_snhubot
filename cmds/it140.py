@@ -2,7 +2,20 @@
 command = "it140"
 public = True
 
-vid_dict = {
+def execute(command, user):
+    from noob_snhubot import bot_id
+
+    cmd = command.split()
+    response = "I'm sorry, Dave.  I'm afraid I can't do that. Try `<@{}> it140 help` for a list of topics.".format(bot_id)
+
+    """
+    Maybe this one?  Design options.
+    response = "I'm sorry, {}.  I'm afraid I can't do that.  Try `<@{}> it140 help` for a list of topics.".format(user, bot_id)
+    """
+
+    attachment = None
+
+    vid_dict = {
     "basics1" : "https://youtu.be/3XbPF2saKck\n", # tabs and indentation
     "basics2" : "https://youtu.be/BgoUPzkGlwU\n", # data types: strings
     "basics3" : "https://youtu.be/RrvjoSY5FnI\n", # data types: boolean
@@ -19,15 +32,7 @@ vid_dict = {
     "projects4" : "https://youtu.be/UR7o14jgS5g\n", # atm script
     "projects5" : "https://youtu.be/ZpNbFrMcqM\n", # grocery list
     "regex1" : "https://youtu.be/0gUhbDreiTs\n" # regular expression basics
-}
-
-def execute(command, user):
-    from noob_snhubot import bot_id
-
-    cmd = command.split()
-
-    response = "I'm sorry Dave, I'm afraid I can't do that. Try `<@{}> it140 help` for a list of topics.".format(bot_id)
-    attachment = None
+    }
 
     if len(cmd) > 1:
  
