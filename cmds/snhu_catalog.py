@@ -33,7 +33,7 @@ else:
     disabled = True
 
 def execute(command, user):
-    default_response = "Sorry, I don't understand. Try `<@{}> catalog help`".format(bot_id)
+    default_response = "Sorry, I don't understand. Try `<@{}> catalog help` for more details.".format(bot_id)
     response = None
     attachment = None
 
@@ -45,7 +45,7 @@ def execute(command, user):
 
         if len(requests) > 1:
             if requests[1].lower().startswith('help'):
-                response = "Oh... You think _*you*_ need help. Try being a Slackbot!"
+                response = "There's two ways I can help you:\n`catalog <Subject>` will return a list of course IDs for a given subject: `catalog Computer Science`\n`catalog <Course ID>` will give you details about a given course: `catalog CS499`\nYou can also feed me a list of up to three courses, and I'll try to find all of them: `catalog CS200 CS201 CS260`"
             elif re.match(COURSE_FORMAT, requests[1]):
                 # process course list
                 attachments = []
@@ -63,8 +63,11 @@ def execute(command, user):
                         if course_data:                    
                             attach = {
                                 "title":"{}".format(course_data.title),
-                                "text":"{}".format(course_data.description),
                                 "fields":[                                
+                                    {
+                                        "title":"Description",
+                                        "value":"{}".format(course_data.description)
+                                    },
                                     {
                                         "title":"Course ID",
                                         "value":"{}".format(course),
@@ -76,14 +79,15 @@ def execute(command, user):
                                         "short":"true"
                                     }
                                 ],
-                                "color":"#0a3370" #notice the SNHU Color Scheme!
+                                "color":"#0a3370", #notice the SNHU Color Scheme!
+                                "footer":"Brought to you by SNHU",
+			                    "footer_icon":"https://www.snhu.edu/assets/SNHU/images/common/favicon.ico"
                             }
 
                             if course_data.requisites:
                                 attach['fields'].append({
                                     "title":"Requisites",
-                                    "value":"{}".format(course_data.requisites),
-                                    "short":"false"
+                                    "value":"{}".format(course_data.requisites)
                                 })                              
 
                             attachments.append(attach)
