@@ -6,7 +6,8 @@ command = "roll"
 public = True
 
 def execute(command, user):
-    from noob_snhubot import bot_id
+    from noob_snhubot import slack_client
+    bot_id = slack_client.api_call("auth.test")["user_id"]
 
     ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
     roll = command.split()
