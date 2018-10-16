@@ -212,8 +212,6 @@ def execute(command, user):
             response, attachment = give_options[topic]()
         except KeyError:
             response = "I'm sorry, Dave.  I'm afraid I can't do that. Try `<@{}> it140 help` for a list of topics.".format(bot_id)
-        #except:
-        #    response = "WHAT HAVE YOU DONE?!"
     else:
         response = "Looks like you may have forgotten the topic.  You can get a list from `<@{}> it140 help`.".format(bot_id)
             
