@@ -19,7 +19,13 @@ def execute(command, user):
         roll = command.split()[1]
         
         if roll.lower().startswith("help"):
-            response = "Let me show you how I roll:\n`roll XdY[±Z]` rolls X number of Y-Sided dice with an optional positive or negative Z modifier.\nExamples:\n`@Noob SNHUbot roll 2d6`\n`@Noob SNHUbot roll 1d10+3`\n`@Noob SNHUbot roll 20d4-5`"
+            # PEP8 style for long strings
+            response = ("Let me show you how I roll:\n`roll XdY[±Z]` "
+                "rolls X number of Y-Sided dice with an optional positive or "
+                "negative Z modifier.\n"
+                "Examples:\n`"
+                "<@{0}> roll 2d6`\n`<@{0}> roll 1d10+3`\n`<@{0}> roll 20d4-5`"
+                ).format(bot_id)
         else:
             match = re.match(ROLL_REGEX, roll)
 
