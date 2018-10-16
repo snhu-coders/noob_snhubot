@@ -66,6 +66,7 @@ def execute(command, user):
 ```
 
 ### Configuration
+
 The preferred method to configure the bot is now YAML. A `config.yml` in the root folder of the project
 should contain the client token and Mongo DB (optional) configurations.
 
@@ -76,7 +77,7 @@ slackbot:
   token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
 mongo:  
   db: my_database
-  collections: 
+  collections:
     conn: conn_log
     cmds: cmd_log
   hostname: my_db_server
