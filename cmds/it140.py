@@ -3,15 +3,7 @@ import json
 command = "it140"
 public = True
 
-def execute(command, user):
-    from noob_snhubot import slack_client
-
-    bot_id = slack_client.api_call("auth.test")["user_id"]
-    response = None
-    attachment = None
-    cmd = command.split()
-
-    data = {
+data = {
         "basics" : [
             ["Basics", "Everyone has to start somewhere!\n"],
             [
@@ -71,7 +63,7 @@ def execute(command, user):
         ] 
     }
 
-    def build_attachment(topic):
+def build_attachment(topic):
         links = ""
         for item in data[topic][1]:
             links += item[0] + item[1]
@@ -91,11 +83,19 @@ def execute(command, user):
                     ])
         return attachment
 
+def execute(command, user):
+    from noob_snhubot import slack_client
+
+    bot_id = slack_client.api_call("auth.test")["user_id"]
+    response = None
+    attachment = None
+    cmd = command.split()
+
     if len(cmd) > 1:
         topic = cmd[1].lower()
         try:
             if topic == "help":
-                response = "Here is a list of valid IT-140 topics:\n\n`basics`\n`dicts`\n`files`\n`functions`\n`lists`\n`projects`\n`regex`\n"
+                response = "Here is a list of valid IT-140 topics:\n\n" + "\n".join("`{}`".format(x) for x in data.keys() if x != "it140")
             else:
                 attachment = build_attachment(topic)
         except KeyError:
