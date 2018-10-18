@@ -21,7 +21,7 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * channels
   * Displays a detailed list of channels in the Slack workgroup.
 * help
-  * Shows a list of known commands
+  * Shows a list of known commands.
 * it140
   * Gives links to tutorial videos pertaining to course material in IT-140.
   * Requires secondary command to indicate desired topic: `@Noob SNHUbot it140 topic`.
