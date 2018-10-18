@@ -119,6 +119,7 @@ def handle_command(command, channel, user, msg_type):
             'channel': channel
         }
 
+        mongo.use_db(DB_CONFIG['db'])
         mongo.use_collection(DB_CONFIG['collections']['cmds'])
         result = mongo.insert_document(doc)
         output(f"[{mongo.db}: {mongo.collection}] - Inserted: {result.inserted_id}")        
@@ -176,6 +177,7 @@ def main():
             output(f"Bot ID: {bot_id}")            
             
             if DB_CONFIG:
+                mongo.use_db(DB_CONFIG['db'])
                 mongo.use_collection(DB_CONFIG['collections']['conn'])
                 doc = {'date': datetime.datetime.utcnow(),
                     'type': 'connection',

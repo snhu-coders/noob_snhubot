@@ -6,7 +6,8 @@ command = "roll"
 public = True
 
 def execute(command, user):
-    from noob_snhubot import bot_id
+    from noob_snhubot import slack_client
+    bot_id = slack_client.api_call("auth.test")["user_id"]
 
     ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
     roll = command.split()
@@ -18,7 +19,13 @@ def execute(command, user):
         roll = command.split()[1]
         
         if roll.lower().startswith("help"):
-            response = "Let me show you how I roll:\n`roll XdY[±Z]` rolls X number of Y-Sided dice with an optional positive or negative Z modifier.\nExamples:\n`@Noob SNHUbot roll 2d6`\n`@Noob SNHUbot roll 1d10+3`\n`@Noob SNHUbot roll 20d4-5`"
+            # PEP8 style for long strings
+            response = ("Let me show you how I roll:\n`roll XdY[±Z]` "
+                "rolls X number of Y-Sided dice with an optional positive or "
+                "negative Z modifier.\n"
+                "Examples:\n`"
+                "<@{0}> roll 2d6`\n`<@{0}> roll 1d10+3`\n`<@{0}> roll 20d4-5`"
+                ).format(bot_id)
         else:
             match = re.match(ROLL_REGEX, roll)
 
