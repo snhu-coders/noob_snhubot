@@ -10,8 +10,16 @@ Noob SNHUbot loads a series of commands and can execute them when prompted by a 
 
 Noob SNHUbot will respond to the following direct messages. To begin a conversation, start a message in the channel with `@Noob SNHUbot`:
 
+* catalog
+  * Uses SNHU Course Catalog Data to fetch details about course subjects and course IDs.
+  * catalog `subject` returns a list of Course IDs for the given subject:
+    * `catalog Computer Science`
+  * catalog `courseID` will return an attachment with catalog data for the course:
+    * `catalog CS499`
+  * catalog `courseID1 courseID2 courseID3` will return attachments for up to three course IDs.
+  * Will accept either format for course ID: `ABC-123` or `ABC123`, case insensitive.
 * channels
-  * Displays a detailed list of channels in the Slack workgroup
+  * Displays a detailed list of channels in the Slack workgroup.
 * help
   * Shows a list of known commands
 * it140
@@ -33,8 +41,8 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * roll `XdY[±Z]`
   * Rolls X number of Y-Sided dice with a + or - Z modifier!
   * Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
-  * `roll help` will respond with a help message that explains the syntax with examples.
-  * Valid rolls respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message indicated the total value of the roll, what roll is operated on, individual roll values, and the modifier applied.
+  * `roll help` will respond with a help message that explains the syntax with examples
+  * Valid rolls respond with a Slack [Attachment](https://api.slack.com/docs/message-attachments) message indicated the total value of the roll, what roll is operated on, individual roll values, and the modifier applied
 * what is the airspeed velocity of an unladen swallow?
   * A clever joke.
   * Responds with a Youtube video to a Monty Python and the Holy Grail clip.
@@ -70,6 +78,7 @@ def execute(command, user):
 ```
 
 ### Configuration
+
 The preferred method to configure the bot is now YAML. A `config.yml` in the root folder of the project
 should contain the client token and Mongo DB (optional) configurations.
 
@@ -80,7 +89,7 @@ slackbot:
   token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
 mongo:  
   db: my_database
-  collections: 
+  collections:
     conn: conn_log
     cmds: cmd_log
   hostname: my_db_server
