@@ -14,6 +14,18 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
   * Displays a detailed list of channels in the Slack workgroup
 * help
   * Shows a list of known commands
+* it140
+  * Gives links to tutorial videos pertaining to course material in IT-140.
+  * Requires secondary command to indicate desired topic: `@Noob SNHUbot it140 topic`.
+  * Valid secondary commands are:
+    * `help`: gives a list of valid commands.
+    * `basics`: gives video links pertaining to Python basics.
+    * `dicts`: gives video links pertaining to Python dictionaries.
+    * `files`: gives video links pertaining to Python file handling.
+    * `functions`: gives video links pertaining to Python functions.
+    * `lists`: gives video links pertaining to Python lists.
+    * `project`: gives video links pertaining to the various script projects in IT-140.
+    * `regex`: gives video links pertaining to regular expressions in Python. 
 * packtbook
   * Reaches out to the Packtbook Website to display the latest free book of the day.
   * `packtbook mini` will show the attachment in a smaller format.
