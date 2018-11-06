@@ -95,7 +95,7 @@ def execute(command, user):
         topic = cmd[1].lower()
         try:
             if topic == "help":
-                response = "Here is a list of valid IT-140 topics:\n\n" + "\n".join("`{}`".format(x) for x in data.keys() if x != "it140")
+                response = "Here is a list of valid IT-140 topics:\n\n" + "\n".join("- `{}`".format(x) for x in data.keys() if x != "it140")
             else:
                 attachment = build_attachment(topic)
         except KeyError:
