@@ -40,59 +40,57 @@ def execute(command, user):
     if disabled:
         response = "I'm sorry. This command has been disabled because I'm currently running without a database connection."
     else:
-        COURSE_FORMAT = "^[a-zA-Z]{2,3}-?[0-9]{3}" # CS499, ACC-101, etc
+        COURSE_FORMAT = r"[a-zA-Z]{2,3}[- ]?[0-9]{3}" # CS499, CS 499, CS-499, ACC-499, etc.
+        course_matches = re.findall(COURSE_FORMAT, command)
         requests = command.split()        
 
         if len(requests) > 1:
             if requests[1].lower().startswith('help'):
                 response = "There's two ways I can help you:\n`catalog <Subject>` will return a list of course IDs for a given subject: `catalog Computer Science`\n`catalog <Course ID>` will give you details about a given course: `catalog CS499`\nYou can also feed me a list of up to three courses, and I'll try to find all of them: `catalog CS200 CS201 CS260`"
-            elif re.match(COURSE_FORMAT, requests[1]):
+            elif len(course_matches) > 0:
                 # process course list
                 attachments = []
                 bad_courses = []
                 
                 # get only 3 courses from list
-                for course in requests[1:4]:
+                for course in course_matches[0:3]:
                     course = course.upper()                    
-                    match = re.match(COURSE_FORMAT, course)                    
+                    course = re.sub(r"[ -]", "", course)  # remove dash and space
+                    course_data = catalog.get_course(course)
 
-                    if match is not None:                                                
-                        course = course.replace("-", "") # Strip the dash
-                        course_data = catalog.get_course(course)
+                    if course_data:
+                        attach = {
+                            "title":"{}".format(course_data.title),
+                            "fields":[
+                                {
+                                    "title":"Description",
+                                    "value":"{}".format(course_data.description)
+                                },
+                                {
+                                    "title":"Course ID",
+                                    "value":"{}".format(course),
+                                    "short":"true"
+                                },
+                                {
+                                    "title":"Credits",
+                                    "value":"{}".format(course_data.credits),
+                                    "short":"true"
+                                }
+                            ],
+                            "color":"#0a3370", #notice the SNHU Color Scheme!
+                            "footer":"Brought to you by SNHU",
+                            "footer_icon":"https://www.snhu.edu/assets/SNHU/images/common/favicon.ico"
+                        }
 
-                        if course_data:                    
-                            attach = {
-                                "title":"{}".format(course_data.title),
-                                "fields":[                                
-                                    {
-                                        "title":"Description",
-                                        "value":"{}".format(course_data.description)
-                                    },
-                                    {
-                                        "title":"Course ID",
-                                        "value":"{}".format(course),
-                                        "short":"true"
-                                    },
-                                    {
-                                        "title":"Credits",
-                                        "value":"{}".format(course_data.credits),
-                                        "short":"true"
-                                    }
-                                ],
-                                "color":"#0a3370", #notice the SNHU Color Scheme!
-                                "footer":"Brought to you by SNHU",
-			                    "footer_icon":"https://www.snhu.edu/assets/SNHU/images/common/favicon.ico"
-                            }
+                        if course_data.requisites:
+                            attach['fields'].append({
+                                "title":"Requisites",
+                                "value":"{}".format(course_data.requisites)
+                            })
 
-                            if course_data.requisites:
-                                attach['fields'].append({
-                                    "title":"Requisites",
-                                    "value":"{}".format(course_data.requisites)
-                                })                              
-
-                            attachments.append(attach)
-                        else:                            
-                            bad_courses.append(course)
+                        attachments.append(attach)
+                    else:
+                        bad_courses.append(course)
 
                 if bad_courses:
                     bad_course_attachment = {
