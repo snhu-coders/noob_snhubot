@@ -5,6 +5,7 @@ import time
 from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
 from urllib.request import urlopen
+from urllib.error import HTTPError
 
 command = 'packtbook'
 public = True
@@ -28,9 +29,9 @@ def execute(command, user):
 
         # Grab the book title
         book_box = soup.find('div', attrs={'class':'dotd-title'})
-        book_title = book_box.text.strip()
+        book_title = book_box.text.strip() if book_box else None
 
-        if book_title != "":
+        if book_title:
             # Grab the book image
             book_img = soup.find('img', attrs={'class':'bookimage'})
             book_img_src = book_img['src'].strip().replace(' ', '%20')
@@ -73,6 +74,10 @@ def execute(command, user):
         else:
             response = "Apologies, but there appears to not be a free book today.  Maybe tomorrow! :crossed_fingers:"
 
+    except HTTPError as err:
+        print(err)
+
+        response = "It appears that the free book page doesn't exist anymore.  Are they still giving away books?"
     except Exception as err:
         print(err)
 
