@@ -40,7 +40,7 @@ def execute(command, user):
     if disabled:
         response = "I'm sorry. This command has been disabled because I'm currently running without a database connection."
     else:
-        COURSE_FORMAT = r"[a-zA-Z]{2,3}[- ]?[0-9]{3}" # CS499, CS 499, CS-499, ACC-499, etc.
+        COURSE_FORMAT = r"[a-zA-Z]{2,4}[- ]?[0-9]{3}" # CS499, CS 499, CS-499, ACC-499, etc.
         course_matches = re.findall(COURSE_FORMAT, command)
         requests = command.split()        
 
