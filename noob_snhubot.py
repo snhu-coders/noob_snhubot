@@ -125,7 +125,10 @@ def handle_command(command, channel, user, msg_type):
         output(f"[{mongo.db}: {mongo.collection}] - Inserted: {result.inserted_id}")        
 
     if msg_type == "message":
-        response, attachment = execute_command(command, cmds.COMMANDS.items(), user)
+        if command == "greet user":
+            response, channel = execute_command(command, cmds.COMMANDS.items(), user)
+        else:
+            response, attachment = execute_command(command, cmds.COMMANDS.items(), user)
     else:
         response, channel = execute_command(command, cmds.COMMANDS_HIDDEN.items(), user)
     
