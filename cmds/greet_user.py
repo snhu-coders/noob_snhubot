@@ -1,6 +1,6 @@
 
 command = "greet user"
-public = True
+public = False
 
 def execute(command, user):
     # import on execution
