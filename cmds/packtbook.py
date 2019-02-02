@@ -67,7 +67,7 @@ def execute(command, user):
         else:
             # Set the time here
             time_split = [int(x) for x in time_string.split(":")]
-            time_left = ""
+            times_left = []
 
             for t in time_split:
                 ind = time_split.index(t)
@@ -75,14 +75,22 @@ def execute(command, user):
                     # If there are no hours/etc, go ahead and skip it
                     pass
                 elif t == 1:
-                    time_left += "{} {}, ".format(t, time_attrs[ind][:-1]) if ind == 0 or ind == 1 else "and {} {}".format(t, time_attrs[ind][:-1])
+                    times_left.append("{} {}".format(t, time_attrs[ind][:-1]))
                 elif t > 1:
-                    time_left += "{} {}, ".format(t, time_attrs[ind]) if ind == 0 or ind == 1 else "and {} {}".format(t, time_attrs[ind])
+                    times_left.append("{} {}".format(t, time_attrs[ind]))
+            
+            if len(times_left) == 1:
+                time_left_string = "{}".format(times_left[0])
+            elif len(times_left) == 2:
+                time_left_string = "{} and {}".format(times_left[0], times_left[1])
+            elif len(times_left) == 3:
+                time_left_string = "{}, {}, and {}".format(times_left[0], times_left[1], times_left[2])
+
 
             output = {"pretext":"The Packt Free Book of the Day is:",
                     "title":book_string,
                     "title_link":url,
-                    "footer":"There's still {} to get this book!".format(time_left),
+                    "footer":"There's still {} to get this book!".format(time_left_string),
                     "color":"#ffca5b"}
 
             if mini:
