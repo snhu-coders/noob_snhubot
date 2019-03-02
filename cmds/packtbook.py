@@ -4,12 +4,17 @@ import re
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
 command = 'packtbook'
 public = True
-driver = webdriver.Chrome()
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+driver = webdriver.Chrome(chrome_options=options, executable_path="/usr/lib/chromium-browser/chromedriver")
 
 def grab_element(delay, elem_function, attr, regex):
     while delay:
