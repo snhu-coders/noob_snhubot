@@ -4,6 +4,8 @@ import re
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
@@ -44,11 +46,11 @@ def execute(command, user):
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
     # Optional mini output
-    if len(command.split()) > 1:
-        arg = command.split()[1]
+    # if len(command.split()) > 1:
+    #     arg = command.split()[1]
 
-        if arg.lower() == "mini":
-            mini = True
+    #     if arg.lower() == "mini":
+    #         mini = True
     
     # Simple catch all error logic
     try:
@@ -108,6 +110,10 @@ def execute(command, user):
         print(err)
 
         response = "Looks like the operation timed out.  Please try again later."
+    except NoSuchElementException as err:
+        print(err)
+
+        response = "Looks like the element doesn't exist."
     except Exception as err:
         print(err)
 
