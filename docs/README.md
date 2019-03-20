@@ -106,4 +106,4 @@ COMING SOON!
 
 ## Contributing
 
-If you'd like to contribute, join us on the Slack workspace mentioned above. All SNHU students are welcome.
+Be sure to check out our [CONTRIBUTING.md](contributing.md) to learn more about making contributions to this project.
