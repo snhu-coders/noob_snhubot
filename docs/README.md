@@ -1,6 +1,30 @@
 # Noob SNHUbot
 
-A simple Slack bot written in Python for the [snhu_coders](https://snhu_coders.slack.com) Slack workgroup. It's a simple and fun side project for me, and anyone else is welcome to participate. Contact me on Slack or open an issue if you'd like to see an enhancement to the bot.
+A simple Slack bot written in Python for the [snhu_coders](https://snhu_coders.slack.com) Slack workgroup. It's a fun side project for me and I welcome anyone interested to participate. Contact me on Slack or open an issue if you'd like to see an enhancement to the bot.
+
+## Getting Started
+
+To get started, [fork](https://help.github.com/en/articles/fork-a-repo) this repository to your own account. From there, clone your repository to your workstation and begin making changes. Follow the instructions in the link for more details.
+
+### Python Version
+
+The production environment runs `Python 3.6.7`. Keep this in mind while developing as some features from later versions may not be available in production.
+
+### Installing
+
+It's recommended to use a virtual environment when working on this project to separate the requirements and avoid conflicts you may have with other projects.
+
+I've used the [venv](https://docs.python.org/3/library/venv.html) module on `Windows 10` for my own development environment, but other methods like [virtualenv](https://virtualenv.pypa.io/en/latest/) should suffice.
+
+Once you have you're setup, simply install the `requirements.txt` file into your environment:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Contributing
+
+Be sure to check out our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Current State
 
@@ -50,7 +74,7 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
   * Simple call and response.
   * Resonds with: _"Your name is `<@{name}>`! Did you forget or something?"_
 
-### Modular Commands
+## Modular Commands
 
 Commands are now modular! Command scripts are stored in the `cmds` module.  When loaded, the module
 will dynamically load all commands and store them in a series of lists depending on their public flag.
@@ -64,7 +88,7 @@ In order to use them, the command script must follow these strict guidelines:
   * The `execute()` function must be defined and accept `command` and `user` variables from the bot.
   * The `execute()` function must return `response` and `attachment`. These can be set to `None`.
 
-#### Command Module Example
+### Command Module Example
 
 ```python
 command = "test"
@@ -77,7 +101,7 @@ def execute(command, user):
     return response, attachment
 ```
 
-### Configuration
+## Configuration
 
 The preferred method to configure the bot is now YAML. A `config.yml` in the root folder of the project
 should contain the client token and Mongo DB (optional) configurations.
@@ -100,10 +124,6 @@ Mongo DB logging is optional and can be omitted from the configuration file.
 
 Additionally, the `config.yml` file can be omitted to fall back on utilizing the `SLACK_CLIENT` environment variable.
 
-### Scheduled Tasks
+## Scheduled Tasks
 
-COMING SOON!
-
-## Contributing
-
-Be sure to check out our [CONTRIBUTING.md](CONTRIBUTING.md) to learn more about making contributions to this project.
+Details coming soon (or not).
