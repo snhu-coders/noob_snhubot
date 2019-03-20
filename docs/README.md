@@ -4,7 +4,7 @@ A simple Slack bot written in Python for the [snhu_coders](https://snhu_coders.s
 
 ## Getting Started
 
-To get started, [fork](https://help.github.com/en/articles/fork-a-repo) this repository to your own account. From there, clone your repository to your workstation and begin making changes. Follow the instructions in the link for more details.
+To get started, [fork](https://help.github.com/en/articles/fork-a-repo) this repository to your own account. From there, [clone](https://help.github.com/en/articles/cloning-a-repository) your repository to your workstation and begin making changes. Follow the instructions in the links provided for more details.
 
 ### Python Version
 
@@ -16,7 +16,7 @@ It's recommended to use a virtual environment when working on this project to se
 
 I've used the [venv](https://docs.python.org/3/library/venv.html) module on `Windows 10` for my own development environment, but other methods like [virtualenv](https://virtualenv.pypa.io/en/latest/) should suffice.
 
-Once you have you're setup, simply install the `requirements.txt` file into your environment:
+Once you're setup, update your `pip` version and install the packages in the `requirements.txt` file into your environment:
 
 ```bash
 pip install -r requirements.txt
