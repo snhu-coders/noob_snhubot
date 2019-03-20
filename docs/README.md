@@ -106,4 +106,4 @@ COMING SOON!
 
 ## Contributing
 
-Be sure to check out our [CONTRIBUTING.md](contributing.md) to learn more about making contributions to this project.
+Be sure to check out our [CONTRIBUTING.md](CONTRIBUTING.md) to learn more about making contributions to this project.
