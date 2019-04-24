@@ -4,6 +4,7 @@ Include/
 Lib/
 Scripts/
 tcl/
+venv*/
 __pycache__/
 
 test_cmd.py
