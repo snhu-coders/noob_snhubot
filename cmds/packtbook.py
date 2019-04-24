@@ -3,18 +3,18 @@ import time
 import re
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
 command = 'packtbook'
 public = True
-options = Options()
-options.add_argument("--headless")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-driver = webdriver.Chrome(chrome_options=options, executable_path="/usr/lib/chromium-browser/chromedriver")
+opts = Options()
+opts.add_argument("--headless")
+opts.add_argument('--no-sandbox')
+opts.add_argument('--disable-dev-shm-usage')
+driver = webdriver.Chrome(chrome_options=opts)
 
 def grab_element(delay, elem_function, attr, regex):
     while delay:
@@ -37,7 +37,7 @@ def grab_element(delay, elem_function, attr, regex):
     # returns here only on failure
     return "Failed"
 
-def execute(command, user):    
+def execute(command, user):
     response = None
     attachment = None
     mini = False
@@ -52,9 +52,9 @@ def execute(command, user):
     if len(command.split()) > 1:
         arg = command.split()[1]
 
-        if arg.lower() == "mini":
-            mini = True
-    
+        #if arg.lower() == "mini":
+        #    mini = True
+
     # Simple catch all error logic
     try:
         # Set the driver to wait a little bit before assuming elements are not present, then grab the page:
@@ -83,7 +83,7 @@ def execute(command, user):
                     times_left.append("{} {}".format(t, time_attrs[ind][:-1]))
                 elif t > 1:
                     times_left.append("{} {}".format(t, time_attrs[ind]))
-            
+
             if len(times_left) == 1:
                 time_left_string = "{}".format(times_left[0])
             elif len(times_left) == 2:
