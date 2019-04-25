@@ -14,7 +14,7 @@ Please note we have a code of conduct to be followed in all your interactions wi
     pip freeze > requirements.txt
     ```
 
-4. Make a pull request against the [staging](https://github.com/gsfellis/noob_snhubot/tree/staging) branch of the repository so I don't go breaking the `master` branch by mistake.
+4. Make a pull request against the [staging](https://github.com/snhu-coders/noob_snhubot/tree/staging) branch of the repository so I don't go breaking the `master` branch by mistake.
 
 ## Code of Conduct
 
@@ -73,7 +73,7 @@ further defined and clarified by project maintainers.
 ### Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at [INSERT EMAIL ADDRESS]. All
+reported by contacting the project team at gsf.junk@gmail.com. All
 complaints will be reviewed and investigated and will result in a response that
 is deemed necessary and appropriate to the circumstances. The project team is
 obligated to maintain confidentiality with regard to the reporter of an incident.
