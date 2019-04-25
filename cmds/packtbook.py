@@ -116,7 +116,7 @@ def execute(command, user):
     except NoSuchElementException as err:
         print(err)
 
-        response = "Looks like the element doesn't exist."
+        response = "Looks like the page elements we need are missing are broken.  Did the page change?"
     except Exception as err:
         print(err)
 
