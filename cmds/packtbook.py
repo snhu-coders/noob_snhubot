@@ -5,6 +5,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
@@ -49,8 +50,8 @@ def execute(command, user):
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
     # Optional mini output
-    if len(command.split()) > 1:
-        arg = command.split()[1]
+    # if len(command.split()) > 1:
+    #     arg = command.split()[1]
 
         #if arg.lower() == "mini":
         #    mini = True
@@ -83,7 +84,6 @@ def execute(command, user):
                     times_left.append("{} {}".format(t, time_attrs[ind][:-1]))
                 elif t > 1:
                     times_left.append("{} {}".format(t, time_attrs[ind]))
-
             if len(times_left) == 1:
                 time_left_string = "{}".format(times_left[0])
             elif len(times_left) == 2:

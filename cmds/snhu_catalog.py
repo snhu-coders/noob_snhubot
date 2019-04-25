@@ -33,13 +33,11 @@ else:
     disabled = True
 
 def execute(command, user):
-    default_response = "Sorry, I don't understand. Try `<@{}> catalog help` for more details.".format(bot_id)
+    default_response = "Sorry, I don't understand. Try `<@{}> catalog help` for more details.".format(bot_id) if not disabled else "I'm sorry. This command has been disabled because I'm currently running without a database connection."
     response = None
     attachment = None
 
-    if disabled:
-        response = "I'm sorry. This command has been disabled because I'm currently running without a database connection."
-    else:
+    if not disabled:
         COURSE_FORMAT = r"[a-zA-Z]{2,4}[- ]?[0-9]{3}" # CS499, CS 499, CS-499, ACC-499, etc.
         course_matches = re.findall(COURSE_FORMAT, command)
         requests = command.split()        
