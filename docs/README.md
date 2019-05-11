@@ -49,8 +49,8 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
 * it140
   * Gives links to tutorial videos pertaining to course material in IT-140.
   * Requires secondary command to indicate desired topic: `@Noob SNHUbot it140 topic`.
+    * Calling the command with no topic, `@Noob SNHUbot it140 topic`, gives a help list with valid topics.
   * Valid secondary commands are:
-    * `help`: gives a list of valid commands.
     * `basics`: gives video links pertaining to Python basics.
     * `dicts`: gives video links pertaining to Python dictionaries.
     * `files`: gives video links pertaining to Python file handling.
