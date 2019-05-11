@@ -94,13 +94,11 @@ def execute(command, user):
     if len(cmd) > 1:
         topic = cmd[1].lower()
         try:
-            if topic == "help":
-                response = "Here is a list of valid IT-140 topics:\n\n" + "\n".join("- `{}`".format(x) for x in data.keys() if x != "it140")
-            else:
-                attachment = build_attachment(topic)
+            attachment = build_attachment(topic)
         except KeyError:
-            response = "I'm sorry, Dave.  I'm afraid I can't do that. Try `<@{}> it140 help` for a list of topics.".format(bot_id)
+            response = "I'm sorry, Dave.  I'm afraid I can't do that. Try `<@{}> it140` for a list of valid topics.".format(bot_id)
     else:
-        response = "Looks like you may have forgotten the topic.  You can get a list from `<@{}> it140 help`.".format(bot_id)
+        response = "Here is a list of valid IT-140 topics.  Proceed by entering: `<@{}> it140 topic`. \n\n".format(bot_id) \
+            + "\n".join("- `{}`".format(x) for x in data.keys() if x != "it140")
              
     return response, attachment
