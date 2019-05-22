@@ -3,12 +3,9 @@ import json
 command = "channels"
 public = True
 
-def execute(command, user):
-    # import on execution
-    from noob_snhubot import slack_client
-    
+def execute(command, user, bot):   
     # Get IM list
-    channels_info = slack_client.api_call("channels.list")
+    channels_info = bot.slack_client.api_call("channels.list")
     channels = {} # dictionary for listing all channels in workspace
     
     # Get the channels list and prep for mention expantion

@@ -2,15 +2,12 @@
 command = "greet user"
 public = False
 
-def execute(command, user):
-    # import on execution
-    from noob_snhubot import slack_client
-    
+def execute(command, user, bot):
     # Get IM list
-    team_info = slack_client.api_call("team.info")
-    channels_info = slack_client.api_call("channels.list")
+    team_info = bot.slack_client.api_call("team.info")
+    channels_info = bot.slack_client.api_call("channels.list")
     channels = {} # dictionary for listing all channels in workspace
-    bot_id = slack_client.api_call("auth.test")["user_id"]
+    bot_id = bot.id
 
     # Set the Team Name
     if team_info.get("ok"):
@@ -36,7 +33,7 @@ def execute(command, user):
         channel_output += "<#{}>: {}\n".format(k, v)
 
     # open the IM channel to the new user
-    im_channel = slack_client.api_call("im.open", user=user)
+    im_channel = bot.slack_client.api_call("im.open", user=user)
 
     #print("IM CHANNEL:")
     #print(im_channel)

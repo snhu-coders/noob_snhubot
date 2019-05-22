@@ -83,10 +83,8 @@ def build_attachment(topic):
                     ])
         return attachment
 
-def execute(command, user):
-    from noob_snhubot import slack_client
-
-    bot_id = slack_client.api_call("auth.test")["user_id"]
+def execute(command, user, bot):
+    bot_id = bot.id
     response = None
     attachment = None
     cmd = command.split()

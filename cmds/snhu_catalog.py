@@ -1,38 +1,39 @@
 import re
 import json
-from noob_snhubot import DB_CONFIG
+
 from BotHelper import Catalog, Course
-from BotHelper.HashTable import HashTable
+#from BotHelper.HashTable import HashTable
 
 command = "catalog"
 public = True
 disabled = False
 
-# Check if we're running with a database connection
-if DB_CONFIG:
-    # perform imports
-    from noob_snhubot import mongo, slack_client
+def execute(command, user, bot):
+    # Check if we're running with a database connection
+    if bot.db_conn:
+        # perform imports
+        #from noob_snhubot import mongo, slack_client
 
-    bot_id = slack_client.api_call("auth.test")["user_id"]
-    
-    # change to catalog/subjects context
-    mongo.use_db('catalog')
-    mongo.use_collection('subjects')
-    
-    # get all documents
-    data = mongo.find_documents({})
+        bot_id = bot.id
+        
+        # change to catalog/subjects context
+        bot.db_conn.use_db('catalog')
+        bot.db_conn.use_collection('subjects')
+        
+        # get all documents
+        data = bot.db_conn.find_documents({})
 
-    # create Catalog using HashTable implementation
-    catalog = Catalog()
-    for subject in data:
-        course_data = HashTable(47)
-        for course in subject['courses']:
-            course_data[course['id']] = Course(course['title'], course['description'], course['credits'], course['requisites'])
-        catalog.subjects[subject['title']] = course_data
-else:    
-    disabled = True
+        # create Catalog using HashTable implementation
+        catalog = Catalog()
+        for subject in data:
+            course_data = {}
+            for course in subject['courses']:
+                course_data[course['id']] = Course(course['title'], course['description'], course['credits'], course['requisites'])
+            catalog.subjects[subject['title']] = course_data
+    else:    
+        disabled = True
 
-def execute(command, user):
+
     default_response = "Sorry, I don't understand. Try `<@{}> catalog help` for more details.".format(bot_id) if not disabled else "I'm sorry. This command has been disabled because I'm currently running without a database connection."
     response = None
     attachment = None

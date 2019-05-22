@@ -37,7 +37,7 @@ def grab_element(delay, elem_function, attr, regex):
     # returns here only on failure
     return "Failed"
 
-def execute(command, user):
+def execute(command, user, bot):
     response = None
     attachment = None
     mini = False

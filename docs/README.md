@@ -84,8 +84,9 @@ In order to use them, the command script must follow these strict guidelines:
   * The `command` variable must be defined. It is used to identify the command trigger for the bot.
 * `public` variable
   * Boolean value if the command should be publicly callable by users or privately used internally by the bot itself.
-* `execute(command, user)`
-  * The `execute()` function must be defined and accept `command` and `user` variables from the bot.
+* `execute(command, user, bot)`
+  * The `execute()` function must be defined with `command`, `user`, and `bot` parameters so the bot can call the command.
+    * `bot` was added so the command can make references to the bot, such as the bot's `id`, which was pretty common. 
   * The `execute()` function must return `response` and `attachment`. These can be set to `None`.
 
 ### Command Module Example
@@ -94,7 +95,7 @@ In order to use them, the command script must follow these strict guidelines:
 command = "test"
 public = True
 
-def execute(command, user):
+def execute(command, user, bot):
     attachment = None
     response = "This is just an example."
 
@@ -103,26 +104,64 @@ def execute(command, user):
 
 ## Configuration
 
-The preferred method to configure the bot is now YAML. A `config.yml` in the root folder of the project
-should contain the client token and Mongo DB (optional) configurations.
+The preferred method to configure the bot is now YAML. Configuration files can be created and passed as arguments
+when launching the application (see next section).
 
-Sample `config.yml`:
+Sample `slack.yml`:
 
 ```yaml
-slackbot:
-  token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
-mongo:  
-  db: my_database
-  collections:
-    conn: conn_log
-    cmds: cmd_log
-  hostname: my_db_server
-  port: 27017
+token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
 ```
 
-Mongo DB logging is optional and can be omitted from the configuration file.
+Sample `mongo.yml`:
 
-Additionally, the `config.yml` file can be omitted to fall back on utilizing the `SLACK_CLIENT` environment variable.
+```yaml  
+db: my_database
+collections:
+  conn: conn_log
+  cmds: cmd_log
+hostname: my_db_server
+port: 27017
+```
+
+## Launching the Bot
+
+With decoupling the Bot, Slack and Mongo tasks, the primary script, `noob_snhubot.py`, contains only that which it needs to process the
+primary loop.  Optional command line arguments have been added with the use of the `argparse` library.
+
+```bash
+usage: app.py [-h] [-m MONGO_CONFIG] [-d DELAY]
+              [-s SLACK_CONFIG | -e SLACK_ENV_VARIABLE]
+
+Launch the Noob SNHUBot application.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MONGO_CONFIG, --mongo_config MONGO_CONFIG
+                        Relative path to Mongo Database configuration file.
+  -d DELAY, --delay DELAY
+                        Sets the delay between RTM reads.
+  -s SLACK_CONFIG, --slack_config SLACK_CONFIG
+                        Relative path to Slack configuration file.
+  -e SLACK_ENV_VARIABLE, --slack_env_variable SLACK_ENV_VARIABLE
+                        Environment variable holding the Slack client token.
+```
+
+### Examples command execution
+
+```bash
+python noob_snhubot.py --slack_config config\slack.yml
+python noob_snhubot.py -s config\slack.yml
+
+python noob_snhubot.py --slack_config config\slack.yml --mongo_config config\mongo.yml
+python noob_snhubot.py -s config\slack.yml -m config\mongo.yml
+
+python noob_snhubot.py --slack_env_variable SLACK_ENV_VARIABLE
+python noob_snhubot.py -e SLACK_ENV_VARIABLE
+
+python noob_snhubot.py -d 5
+python noob_snhubot.py --help
+```
 
 ## Scheduled Tasks
 
