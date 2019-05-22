@@ -95,9 +95,11 @@ if __name__ == "__main__":
                     output("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
                     sys.exit()
 
-                # Keep scheduling the task                
-                if not bot.scheduler.has_task('packtbook', datetime.time(9, 59)):
-                    bot.scheduler.schedule_cmd('packtbook', 'CB8B913T2', datetime.time(9, 59), bot.handle_scheduled_command, bot.id)
+                # Keep scheduling the task
+                packtbook_time = datetime.time(20, 30)
+                               
+                if not bot.scheduler.has_task('packtbook', packtbook_time):
+                    bot.scheduler.schedule_cmd('packtbook', 'CB8B913T2', packtbook_time, bot.handle_scheduled_command, bot.id)
 
                 # Execute clean up only when tasks have been scheduled
                 if bot.scheduler.sched:
