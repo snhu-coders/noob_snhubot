@@ -6,6 +6,8 @@ Scripts/
 tcl/
 venv*/
 __pycache__/
+junk/
+config/
 
 test_cmd.py
 pip-selfcheck.json

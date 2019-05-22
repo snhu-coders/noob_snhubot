@@ -130,8 +130,8 @@ With decoupling the Bot, Slack and Mongo tasks, the primary script, `noob_snhubo
 primary loop.  Optional command line arguments have been added with the use of the `argparse` library.
 
 ```bash
-usage: app.py [-h] [-m MONGO_CONFIG] [-d DELAY]
-              [-s SLACK_CONFIG | -e SLACK_ENV_VARIABLE]
+usage: noob_snhubot.py [-h] [-m MONGO_CONFIG] [-d DELAY]
+                       [-s SLACK_CONFIG | -e SLACK_ENV_VARIABLE]
 
 Launch the Noob SNHUBot application.
 
@@ -150,16 +150,15 @@ optional arguments:
 ### Examples command execution
 
 ```bash
-python noob_snhubot.py --slack_config config\slack.yml
-python noob_snhubot.py -s config\slack.yml
-
 python noob_snhubot.py --slack_config config\slack.yml --mongo_config config\mongo.yml
 python noob_snhubot.py -s config\slack.yml -m config\mongo.yml
 
-python noob_snhubot.py --slack_env_variable SLACK_ENV_VARIABLE
+python noob_snhubot.py -s config\slack.yml
+
 python noob_snhubot.py -e SLACK_ENV_VARIABLE
 
 python noob_snhubot.py -d 5
+
 python noob_snhubot.py --help
 ```
 
