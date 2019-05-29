@@ -9,6 +9,8 @@ public = True
 disabled = False
 
 def execute(command, user, bot):
+    global disabled
+
     # Check if we're running with a database connection
     if bot.db_conn:
         # perform imports

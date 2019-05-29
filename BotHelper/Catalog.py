@@ -1,4 +1,4 @@
-from .HashTable import HashTable
+#from .HashTable import HashTable
 
 class Course():
     """
@@ -18,27 +18,13 @@ class Course():
         Returns a tuple representation of the stored data.
         """
         return (self.title, self.description, self.credits)
-        
-# class Subject():
-#     """
-#     Implements a Subject data structure to be used in a Catalog.
-#     """
-#     def __init__(self, courses=HashTable(47)):
-#         self.courses = courses
-
-#     def __repr__(self):
-#         return str(repr(self.courses))
-
-#     def __len__(self):
-#         return len(self.courses)
-
 
 class Catalog():
     """
     Implements a Catalog for storing course data utilizing nested HashTables.
     """
-    def __init__(self, subjects=HashTable(79)):        
-        self.subjects = subjects
+    def __init__(self):        
+        self.subjects = {}
 
     def __repr__(self):
         return repr(self.subjects)

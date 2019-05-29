@@ -1,5 +1,5 @@
 from .Scheduler import Scheduler
-from .MongoConnection import MongoConnection
+from .MongoConn import MongoConn
 from .Catalog import Catalog, Course
 from .Response import Response
 from .SlackConn import SlackConn

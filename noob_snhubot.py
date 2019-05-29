@@ -8,7 +8,7 @@ import websocket._exceptions as ws_exceptions
 import yaml
 
 from Bot import Bot
-from BotHelper import MongoConnection, SlackConn, output
+from BotHelper import MongoConn, SlackConn, output
 
 def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
     # Get the Slack Token
@@ -24,7 +24,7 @@ def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
 def load_config(config):
     try:
         with open(os.path.realpath(config), 'r') as f:
-            return yaml.load(f.read(), Loader=yaml.BaseLoader)
+            return yaml.load(f.read(), Loader=yaml.FullLoader)
     except FileNotFoundError as e:
         sys.exit("Could not find configuration file: {}".format(e.filename))            
 
@@ -59,11 +59,11 @@ if __name__ == "__main__":
     if args.mongo_config:
         mc = load_config(args.mongo_config)
 
-        mongo = MongoConnection(
+        mongo = MongoConn(mc,           
             db = mc['db'], 
             collection = mc['collections']['conn'], 
             hostname = mc['hostname'], 
-            port = mc['port']    
+            port = mc['port']
             )
 
     # Primary Loop
@@ -73,7 +73,18 @@ if __name__ == "__main__":
 
             # Read bot's user id by calling Web API method 'auth.test'
             bot = Bot(slack_client.api_call("auth.test")["user_id"], slack_client, mongo)
-            output(f"Bot ID: {bot.id}") 
+            output(f"Bot ID: {bot.id}")
+
+            # Log Connection
+            if mongo:
+                doc = {
+                    'date': datetime.datetime.utcnow(),                
+                    'type': 'connection',
+                    'token': token,
+                    'bot_id': bot.id
+                    }
+
+                mongo.log_to_collection(doc, mc['db'], mc['collections']['conn'])
 
             while slack_client.server.connected:
                 # Exceptions: TimeoutError, ConnectionResetError, WebSocketConnectionClosedException
