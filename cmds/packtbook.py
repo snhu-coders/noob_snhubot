@@ -16,6 +16,7 @@ opts.add_argument('--no-sandbox')
 opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
 
+
 def grab_element(delay, elem_function, attr, regex):
     while delay:
         if attr == "product__img":
@@ -36,6 +37,7 @@ def grab_element(delay, elem_function, attr, regex):
                 delay -= 0.5
     # returns here only on failure
     return "Failed"
+
 
 def execute(command, user, bot):
     response = None

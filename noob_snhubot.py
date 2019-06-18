@@ -10,8 +10,18 @@ import yaml
 from Bot import Bot
 from BotHelper import MongoConn, SlackConn, output
 
+
 def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
-    # Get the Slack Token
+    """
+    Get the Slack token used for connection
+
+    Args:
+        slack_config (str): Path of the Slack configuration file
+        slack_env_variable (str): The environment variable used for the Slack client token
+
+    Returns:
+        The token from the configuration file or the environment variable
+    """
     try:
         if slack_config:
             return load_config(slack_config)['token']    
@@ -21,12 +31,24 @@ def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
     except KeyError as e:        
         sys.exit("No environment variable {} defined. Exiting...".format(e))
 
+
 def load_config(config):
+    """
+    Process the YAML contents of a configuration file.
+    Exit's the program if an invalid file is passed.
+
+    Args:
+        config (str): Path of the configuration file to be processed
+
+    Returns:
+        Python object representing the YAML configuration
+    """
     try:
         with open(os.path.realpath(config), 'r') as f:
             return yaml.load(f.read(), Loader=yaml.FullLoader)
     except FileNotFoundError as e:
         sys.exit("Could not find configuration file: {}".format(e.filename))            
+
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser(description='Launch the Noob SNHUBot application.')
@@ -53,16 +75,16 @@ if __name__ == "__main__":
     # create new Slack Client object
     slack_client = SlackConn(token) 
     
-    # Setup Mongo DB if presented    
+    # Setup Mongo DB if present
     mongo = None
     
     if args.mongo_config:
         mc = load_config(args.mongo_config)
 
         mongo = MongoConn(mc,           
-            db = mc['db'], 
-            collection = mc['collections']['conn'], 
-            hostname = mc['hostname'], 
+            db = mc['db'],
+            collection = mc['collections']['conn'],
+            hostname = mc['hostname'],
             port = mc['port']
             )
 
@@ -71,14 +93,14 @@ if __name__ == "__main__":
         if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):            
             output("Noob SNHUbot connected and running!")
 
-            # Read bot's user id by calling Web API method 'auth.test'
+            # Instantiate Bot with user id from Web API method 'auth.test', and slack and mongo connections
             bot = Bot(slack_client.api_call("auth.test")["user_id"], slack_client, mongo)
             output(f"Bot ID: {bot.id}")
 
             # Log Connection
             if mongo:
                 doc = {
-                    'date': datetime.datetime.utcnow(),                
+                    'date': datetime.datetime.utcnow(),
                     'type': 'connection',
                     'token': token,
                     'bot_id': bot.id
@@ -104,6 +126,7 @@ if __name__ == "__main__":
                     break
                 except:
                     output("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
+                    bot.cleanup_your_mess()
                     sys.exit()
 
                 # Keep scheduling the task

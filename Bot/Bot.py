@@ -6,7 +6,8 @@ from BotHelper import output
 # Import bot cmds
 import cmds
 
-class Bot():
+
+class Bot:
     # constants
     RTM_READ_DELAY = 1
     MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
@@ -14,6 +15,14 @@ class Bot():
     scheduler = Scheduler()
 
     def __init__(self, id, slack_client, db_conn=None):
+        """
+        A Bot implementation for handling all aspects of reading, parsing, and executing commands.
+
+        Args:
+            id (str): The Slack user id for the Bot, retrieved from a valid Slack connection
+            slack_client: Reference to a valid Slack connection
+            db_conn: Reference to a valid Mongo database connection (can be None)
+        """
         self.id = id
         self.slack_client = slack_client
         self.db_conn = db_conn
@@ -24,7 +33,15 @@ class Bot():
         """
         Executes the command and returns responses received from command output.
 
-        Respones can be response, attachment, or channels, depending on command executed
+        Args:
+            command (str): Full string representation of the command passed by a user
+            commands (dict): Dictionary representation of valid Bot commands
+            user (str): The Slack user's ID that initiated the command
+            log_id: Currently not used
+
+        Returns:
+            Two responses from command execution. Can be a response, attachment, or channel, depending on command.
+
         """
         response1 = None
         response2 = None
@@ -39,7 +56,17 @@ class Bot():
 
     def handle_command(self, command, channel, user, msg_type):
         """
-        Executes bot command if the command is known
+        Processes an incoming bot command, if the command is known.
+
+        Args:
+            command (str): Full string representation of the command passed by a user
+            channel (str): A Slack channel ID the command was received in
+            user (str): The Slack user's ID that initiated the command
+            msg_type (str): Slack message type
+
+        Returns:
+            out (Response): A custom object representing the returned response, attachment and channel from
+                            command execution
         """
         # Default response is help text for the user    
         default_response = "Does not compute. Try `<@{}> help` for command information.".format(self.id)
@@ -90,5 +117,27 @@ class Bot():
         return out
 
     def handle_scheduled_command(self, command, channel, user, msg_type):
+        """
+        Proxy function for executing commands sent to the Bot via itself through the scheduler.
+        Passes the result from handle_command() to the Slack Client's response_to_client() function
+
+        Args:
+            command (str): Full string representation of the command passed by a user
+            channel (str): A Slack channel ID the command was received in
+            user (str): The Slack user's ID that initiated the command
+            msg_type (str): Slack message type
+
+        Returns: None
+        """
         response = self.handle_command(command, channel, user, msg_type)
         self.slack_client.response_to_client(response)
+
+    def cleanup_your_mess(self):
+        """
+        Cleanup logic to be called when the Bot/program is terminating
+        """
+
+        # TODO: I believe this works, but urllib3.connectionpool retries to connect 3 times after close. Might be fine.
+        output("Closing Chrome driver")
+        driver = getattr(getattr(cmds, 'packtbook'), 'driver')
+        driver.quit()

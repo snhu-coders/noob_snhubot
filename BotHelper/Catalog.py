@@ -1,6 +1,4 @@
-#from .HashTable import HashTable
-
-class Course():
+class Course:
     """
     Implements a Course data structure to be used within a Subject.    
     """
@@ -19,7 +17,8 @@ class Course():
         """
         return (self.title, self.description, self.credits)
 
-class Catalog():
+
+class Catalog:
     """
     Implements a Catalog for storing course data utilizing nested HashTables.
     """

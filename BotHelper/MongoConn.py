@@ -1,5 +1,6 @@
 from .MongoConnection import MongoConnection
 
+
 class MongoConn(MongoConnection):
 
     def __init__(self, config, **kwargs):

@@ -4,14 +4,22 @@ from slackclient import SlackClient
 
 from .Output import output
 
-class SlackConn(SlackClient):    
+
+class SlackConn(SlackClient):
     MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
     def parse_bot_commands(self, slack_events, bot_id):
         """
         Parses a list of events coming from the Slack RTM API to find bot commands.
-        If a bot command is found, this function returns a tuple of command and channel.
-        If it's not found, then this function returns None, None.
+        If a bot command is found, this function returns a tuple of command, channel, user id, and event type.
+        If it's not found, then this function returns None, None, None, None.
+
+        Args:
+            slack_events (list): A list of Slack events, generally from the rtm_read() method of a Slack client
+            bot_id (str): The Slack user ID of the bot
+
+        Returns:
+            (tuple) command, channel, user_id, event_type
         """
         for event in slack_events:
             if event["type"] == "message" and not "subtype" in event:
@@ -25,8 +33,14 @@ class SlackConn(SlackClient):
 
     def parse_direct_mention(self, message_text):
         """
-        Finds a direct mention in message text and returns the user ID which 
-        was mentioned. If there is no direct mentions, returns None
+        Processes a direct mention of the bot. Splits the message into two parts, the user ID that matches
+        and the rest of the message passed in (for processing the command).
+
+        Args:
+            message_text (str): Text representation of the message to be parsed
+
+        Returns:
+            (tuple) user_id, message
         """
         matches = re.search(self.MENTION_REGEX, message_text)
 
@@ -36,7 +50,13 @@ class SlackConn(SlackClient):
     def response_to_client(self, response):
         """
         Sends a response back to the channel on the provided slack_client
-        """    
+
+        Args:
+            response (Response): A response object to be sent back to Slack
+
+        Returns:
+            None
+        """
         if response.attachment:
             output(f"Sending attachment: {response.attachment}")        
             self.api_call(
