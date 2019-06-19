@@ -2,11 +2,11 @@
 command = "greet user"
 public = False
 
+
 def execute(command, user, bot):
     # Get IM list
     team_info = bot.slack_client.api_call("team.info")
     channels_info = bot.slack_client.api_call("channels.list")
-    channels = {} # dictionary for listing all channels in workspace
     bot_id = bot.id
 
     # Set the Team Name
@@ -15,28 +15,17 @@ def execute(command, user, bot):
     else:
         team_name = "snhu_coders"
 
-    # Get the channels list and prep for mention expantion
+    # Get the general channel ID
     if channels_info.get("ok"):
         for channel in channels_info.get("channels"):
-            id = channel.get("id")
+            channel_id = channel.get("id")
             name = channel.get("name")
-            purpose = channel.get("purpose").get("value")
 
             if name == "general":
-                general = id
-
-            channels[id] = purpose # Add new dictionary item with purpose
-
-    # Process channels dictionary for output
-    channel_output = ""
-    for k, v in channels.items():
-        channel_output += "<#{}>: {}\n".format(k, v)
+                general = channel_id
 
     # open the IM channel to the new user
     im_channel = bot.slack_client.api_call("im.open", user=user)
-
-    #print("IM CHANNEL:")
-    #print(im_channel)
 
     greeting = """
 _Welcome to *{0}*, <@{1}>!_ 
