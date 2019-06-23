@@ -16,12 +16,12 @@ opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
 
 
-def grab_element(delay, elem_function, attr, regex):
+def grab_element(delay, elem_function, attr):
     while delay:
         if attr == "product__img":
             elem = elem_function(attr)
             text = elem.get_attribute("src")
-            if regex.match(text):
+            if len(text) > 0:
                 return text
             else:
                 time.sleep(0.5)
@@ -29,7 +29,7 @@ def grab_element(delay, elem_function, attr, regex):
         else:
             elem = elem_function(attr)
             text = elem.text
-            if regex.match(text):
+            if len(text) > 0:
                 return text
             else:
                 time.sleep(0.5)
@@ -43,9 +43,6 @@ def execute(command, user):
     attachment = None
     mini = False
     delay = 10
-    book_regex = re.compile(r"^[A-Z].*$")
-    img_regex = re.compile(r"^https:\/\/.*[.]\w{3}$")
-    time_regex = re.compile(r"\d{1,2}:\d{1,2}:\d{1,2}")
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
@@ -56,9 +53,9 @@ def execute(command, user):
         driver.get(url)
 
         # Get the elements
-        book_string = grab_element(delay, driver.find_element_by_class_name, "product__title", book_regex)
-        img_src = grab_element(delay, driver.find_element_by_class_name, "product__img", img_regex)
-        time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer", time_regex)
+        book_string = grab_element(delay, driver.find_element_by_class_name, "product__title")
+        img_src = grab_element(delay, driver.find_element_by_class_name, "product__img")
+        time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer")
 
         # If any of those end up failing, tell the people to try again.  If not, do the attachment
         if book_string == "Failed" or img_src == "Failed" or time_string == "Failed":
