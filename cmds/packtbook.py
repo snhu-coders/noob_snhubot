@@ -3,10 +3,8 @@ import time
 import re
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
-from urllib.request import urlopen
 from urllib.error import HTTPError
 
 command = 'packtbook'
@@ -16,6 +14,7 @@ opts.add_argument("--headless")
 opts.add_argument('--no-sandbox')
 opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
+
 
 def grab_element(delay, elem_function, attr, regex):
     while delay:
@@ -38,6 +37,7 @@ def grab_element(delay, elem_function, attr, regex):
     # returns here only on failure
     return "Failed"
 
+
 def execute(command, user):
     response = None
     attachment = None
@@ -48,13 +48,6 @@ def execute(command, user):
     time_regex = re.compile(r"\d{1,2}:\d{1,2}:\d{1,2}")
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
-
-    # Optional mini output
-    # if len(command.split()) > 1:
-    #     arg = command.split()[1]
-
-        #if arg.lower() == "mini":
-        #    mini = True
 
     # Simple catch all error logic
     try:
@@ -74,6 +67,7 @@ def execute(command, user):
             # Set the time here
             time_split = [int(x) for x in time_string.split(":")]
             times_left = []
+            time_left_string = ""
 
             for t in time_split:
                 ind = time_split.index(t)
@@ -91,12 +85,11 @@ def execute(command, user):
             elif len(times_left) == 3:
                 time_left_string = "{}, {}, and {}".format(times_left[0], times_left[1], times_left[2])
 
-
-            output = {"pretext":"The Packt Free Book of the Day is:",
-                    "title":book_string,
-                    "title_link":url,
-                    "footer":"There's still {} to get this book!".format(time_left_string),
-                    "color":"#ffca5b"}
+            output = {"pretext": "The Packt Free Book of the Day is:",
+                      "title": book_string,
+                      "title_link": url,
+                      "footer": "There's still {} to get this book!".format(time_left_string),
+                      "color": "#ffca5b"}
 
             if mini:
                 output['thumb_url'] = "{}".format(img_src)
@@ -116,6 +109,7 @@ def execute(command, user):
     except Exception as err:
         print(err)
 
-        response = 'I have failed my human overlords!\nYou should be able to find the Packt Free Book of the day here: {}'.format(url)
+        response = 'I have failed my human overlords!\nYou should be able to find the Packt Free' \
+                   ' Book of the day here: {}'.format(url)
 
     return response, attachment
