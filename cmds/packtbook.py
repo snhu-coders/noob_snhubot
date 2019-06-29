@@ -14,6 +14,7 @@ opts.add_argument("--headless")
 opts.add_argument('--no-sandbox')
 opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
+increment = 0.5
 
 
 def grab_element(delay, elem_function, attr):
@@ -24,26 +25,22 @@ def grab_element(delay, elem_function, attr):
                 text = elem.get_attribute("src")
                 if len(text) > 0:
                     return text
-                else:
-                    time.sleep(0.5)
-                    delay -= 0.5
             else:
                 elem = elem_function(attr)
                 text = elem.text
                 if len(text) > 0:
                     return text
-                else:
-                    time.sleep(0.5)
-                    delay -= 0.5
         except NoSuchElementException:
             # returns here only on failure
-            return "Failed"
+            return None
+
+        time.sleep(increment)
+        delay -= increment
 
 
 def execute(command, user):
     response = None
     attachment = None
-    mini = False
     delay = 10
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
@@ -61,16 +58,15 @@ def execute(command, user):
         time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer")
 
         # Check to see if the warning message was present
-        if warning_message.startswith("There are currently no free offers."):
-            response = "Unfortunately, there is no free book today.  We'll try again tomorrow!"
+        if warning_message:
+            response = warning_message
         # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
-        elif book_string == "Failed" or img_src == "Failed" or time_string == "Failed":
+        elif None in [book_string, img_src, time_string]:
             response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
         else:
             # Set the time here
             time_split = [int(x) for x in time_string.split(":")]
             times_left = []
-            time_left_string = ""
 
             for t in time_split:
                 ind = time_split.index(t)
@@ -81,23 +77,24 @@ def execute(command, user):
                     times_left.append("{} {}".format(t, time_attrs[ind][:-1]))
                 elif t > 1:
                     times_left.append("{} {}".format(t, time_attrs[ind]))
-            if len(times_left) == 1:
-                time_left_string = "{}".format(times_left[0])
-            elif len(times_left) == 2:
-                time_left_string = "{} and {}".format(times_left[0], times_left[1])
+
+            time_format = "{}"
+
+            if len(times_left) == 2:
+                time_format = "{} and {}"
             elif len(times_left) == 3:
-                time_left_string = "{}, {}, and {}".format(times_left[0], times_left[1], times_left[2])
+                time_format = "{}, {}, and {}"
 
-            output = {"pretext": "The Packt Free Book of the Day is:",
-                      "title": book_string,
-                      "title_link": url,
-                      "footer": "There's still {} to get this book!".format(time_left_string),
-                      "color": "#ffca5b"}
+            time_left_string = time_format.format(*times_left)
 
-            if mini:
-                output['thumb_url'] = "{}".format(img_src)
-            else:
-                output['image_url'] = "{}".format(img_src)
+            output = {
+                "pretext": "The Packt Free Book of the Day is:",
+                "title": book_string,
+                "title_link": url,
+                "footer": "There's still {} to get this book!".format(time_left_string),
+                "color": "#ffca5b",
+                "image_url": "{}".format(img_src)
+            }
 
             attachment = json.dumps([output])
 
