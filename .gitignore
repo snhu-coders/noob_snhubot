@@ -14,3 +14,4 @@ pip-selfcheck.json
 *.yml
 *.html
 *.sh
+debug.log

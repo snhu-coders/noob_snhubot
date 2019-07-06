@@ -41,7 +41,7 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
   * catalog `courseID` will return an attachment with catalog data for the course:
     * `catalog CS499`
   * catalog `courseID1 courseID2 courseID3` will return attachments for up to three course IDs.
-  * Will accept either format for course ID: `ABC-123` or `ABC123`, case insensitive.
+  * Acceptable formats for course ID are: `ABC-123`, `ABC 123`, or `ABC123`, case insensitive.
 * channels
   * Displays a detailed list of channels in the Slack workgroup.
 * help
