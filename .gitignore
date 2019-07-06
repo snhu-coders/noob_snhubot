@@ -6,9 +6,9 @@ Scripts/
 tcl/
 venv*/
 __pycache__/
-
 test_cmd.py
 pip-selfcheck.json
 *.yml
 *.html
 *.sh
+debug.log
