@@ -1,11 +1,10 @@
 import json
 import time
-import re
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
-from urllib.request import urlopen
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
 from urllib.error import HTTPError
 
 command = 'packtbook'
@@ -15,45 +14,36 @@ opts.add_argument("--headless")
 opts.add_argument('--no-sandbox')
 opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
+increment = 0.5
 
-def grab_element(delay, elem_function, attr, regex):
+
+def grab_element(delay, elem_function, attr):
     while delay:
-        if attr == "product__img":
-            elem = elem_function(attr)
-            text = elem.get_attribute("src")
-            if regex.match(text):
-                return text
+        try:
+            if attr == "product__img":
+                elem = elem_function(attr)
+                text = elem.get_attribute("src")
+                if len(text) > 0:
+                    return text
             else:
-                time.sleep(0.5)
-                delay -= 0.5
-        else:
-            elem = elem_function(attr)
-            text = elem.text
-            if regex.match(text):
-                return text
-            else:
-                time.sleep(0.5)
-                delay -= 0.5
-    # returns here only on failure
-    return "Failed"
+                elem = elem_function(attr)
+                text = elem.text
+                if len(text) > 0:
+                    return text
+        except NoSuchElementException:
+            # returns here only on failure
+            return None
+
+        time.sleep(increment)
+        delay -= increment
+
 
 def execute(command, user):
     response = None
     attachment = None
-    mini = False
     delay = 10
-    book_regex = re.compile(r"^[A-Z].*$")
-    img_regex = re.compile(r"^https:\/\/.*[.]\w{3}$")
-    time_regex = re.compile(r"\d{1,2}:\d{1,2}:\d{1,2}")
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
-
-    # Optional mini output
-    if len(command.split()) > 1:
-        arg = command.split()[1]
-
-        #if arg.lower() == "mini":
-        #    mini = True
 
     # Simple catch all error logic
     try:
@@ -62,12 +52,16 @@ def execute(command, user):
         driver.get(url)
 
         # Get the elements
-        book_string = grab_element(delay, driver.find_element_by_class_name, "product__title", book_regex)
-        img_src = grab_element(delay, driver.find_element_by_class_name, "product__img", img_regex)
-        time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer", time_regex)
+        warning_message = grab_element(2, driver.find_element_by_css_selector, ".message.warning")
+        book_string = grab_element(delay, driver.find_element_by_class_name, "product__title")
+        img_src = grab_element(delay, driver.find_element_by_class_name, "product__img")
+        time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer")
 
-        # If any of those end up failing, tell the people to try again.  If not, do the attachment
-        if book_string == "Failed" or img_src == "Failed" or time_string == "Failed":
+        # Check to see if the warning message was present
+        if warning_message:
+            response = warning_message
+        # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
+        elif None in [book_string, img_src, time_string]:
             response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
         else:
             # Set the time here
@@ -84,24 +78,23 @@ def execute(command, user):
                 elif t > 1:
                     times_left.append("{} {}".format(t, time_attrs[ind]))
 
-            if len(times_left) == 1:
-                time_left_string = "{}".format(times_left[0])
-            elif len(times_left) == 2:
-                time_left_string = "{} and {}".format(times_left[0], times_left[1])
+            time_format = "{}"
+
+            if len(times_left) == 2:
+                time_format = "{} and {}"
             elif len(times_left) == 3:
-                time_left_string = "{}, {}, and {}".format(times_left[0], times_left[1], times_left[2])
+                time_format = "{}, {}, and {}"
 
+            time_left_string = time_format.format(*times_left)
 
-            output = {"pretext":"The Packt Free Book of the Day is:",
-                    "title":book_string,
-                    "title_link":url,
-                    "footer":"There's still {} to get this book!".format(time_left_string),
-                    "color":"#ffca5b"}
-
-            if mini:
-                output['thumb_url'] = "{}".format(img_src)
-            else:
-                output['image_url'] = "{}".format(img_src)
+            output = {
+                "pretext": "The Packt Free Book of the Day is:",
+                "title": book_string,
+                "title_link": url,
+                "footer": "There's still {} to get this book!".format(time_left_string),
+                "color": "#ffca5b",
+                "image_url": "{}".format(img_src)
+            }
 
             attachment = json.dumps([output])
 
@@ -116,6 +109,7 @@ def execute(command, user):
     except Exception as err:
         print(err)
 
-        response = 'I have failed my human overlords!\nYou should be able to find the Packt Free Book of the day here: {}'.format(url)
+        response = 'I have failed my human overlords!\nYou should be able to find the Packt Free' \
+                   ' Book of the day here: {}'.format(url)
 
     return response, attachment
