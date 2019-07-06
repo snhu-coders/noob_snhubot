@@ -70,9 +70,7 @@ _A handy feature of Slack_ is the ability to <https://get.slack.help/hc/en-us/ar
         assert response[1] == self.im_channel.get("channel").get("id")
 
     def test_bad_user(self):
-        im_channel = self.bot.slack_client.api_call("im.open", user="BAD USER")
         response = cmd_greet_user.execute(self.cmd, "BAD USER", self.bot)
-
 
         assert response[0] is None
         assert response[1] is None
