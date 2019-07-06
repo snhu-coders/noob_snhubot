@@ -69,5 +69,6 @@ class SlackConn(SlackClient):
             self.api_call(
                 "chat.postMessage",
                 channel=response.channel,
-                text=response.message
+                text=response.message,
+                unfurl_links=True
             )
