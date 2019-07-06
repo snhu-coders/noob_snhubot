@@ -8,7 +8,7 @@ public = True
 def execute(command, user, bot):    
     bot_id = bot.id
 
-    ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+.-])(\d+))?$"
+    ROLL_REGEX = "^([1-9][0-9]{0,2})d([1-9][0-9]{0,2})(([+-])(\d+))?$"
     roll = command.split()
 
     attachment = None
@@ -46,6 +46,7 @@ def execute(command, user, bot):
                     else:
                         total -= mod            
                 
+                response = None
                 attachment = json.dumps([
                     {
                         "text":"<@{}> rolled *{}*".format(user, total),
