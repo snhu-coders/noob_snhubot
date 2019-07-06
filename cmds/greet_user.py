@@ -47,5 +47,8 @@ _A handy feature of Slack_ is the ability to <https://get.slack.help/hc/en-us/ar
 
 """.format(team_name, user, bot_id, general)
 
-    # Return the new greeting and send private message    
-    return greeting, im_channel.get("channel").get("id") if im_channel.get("ok") else (None, None)
+    # Return the new greeting and send private message
+    if im_channel.get("ok"):
+        return greeting, im_channel.get("channel").get("id")
+    else:
+        return None, None
