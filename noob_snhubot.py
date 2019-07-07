@@ -8,7 +8,7 @@ import websocket._exceptions as ws_exceptions
 import yaml
 
 from Bot import Bot
-from BotHelper import MongoConn, SlackConn, output
+from BotHelper import MongoConn, Scheduler, SlackConn, output
 
 
 def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
@@ -53,6 +53,7 @@ def load_config(config):
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser(description='Launch the Noob SNHUBot application.')
     parser.add_argument("-m", "--mongo_config", required=False, help="Relative path to Mongo Database configuration file.")
+    parser.add_argument("-c", "--sched_config", required=False, help="Relative path to Scheduler Configuration file.")
     parser.add_argument("-d", "--delay", required=False, default=1, type=int, help="Sets the delay between RTM reads.")
     
     sc = parser.add_mutually_exclusive_group()
@@ -88,13 +89,21 @@ if __name__ == "__main__":
             port = mc['port']
             )
 
+    # Setup Scheduler if config present
+    if args.sched_config:
+        sc = load_config(args.sched_config)
+
+        scheduler = Scheduler(sc)
+    else:
+        scheduler = Scheduler()
+
     # Primary Loop
     while True:
         if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):            
             output("Noob SNHUbot connected and running!")
 
             # Instantiate Bot with user id from Web API method 'auth.test', and slack and mongo connections
-            bot = Bot(slack_client.api_call("auth.test")["user_id"], slack_client, mongo)
+            bot = Bot(slack_client.api_call("auth.test")["user_id"], slack_client, scheduler, mongo)
             output(f"Bot ID: {bot.id}")
 
             # Log Connection
@@ -129,15 +138,13 @@ if __name__ == "__main__":
                     bot.cleanup_your_mess()
                     sys.exit()
 
-                # Keep scheduling the task
-                packtbook_time = datetime.time(20, 30)
-                               
-                if not bot.scheduler.has_task('packtbook', packtbook_time):
-                    bot.scheduler.schedule_cmd('packtbook', 'CB8B913T2', packtbook_time, bot.handle_scheduled_command, bot.id)
+                # schedule tasks if the bot is running a scheduler
+                if bot.scheduler:
+                    bot.scheduler.process_schedule(bot.id, bot.commands, bot.handle_scheduled_command)
 
-                # Execute clean up only when tasks have been scheduled
-                if bot.scheduler.sched:
-                    bot.scheduler.cleanup_sched()
+                    # Execute clean up only when tasks have been scheduled
+                    if bot.scheduler.schedule:
+                        bot.scheduler.cleanup_sched()
 
         else:
             output("Connection failed. Exception traceback printed above.")

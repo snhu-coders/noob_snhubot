@@ -12,9 +12,7 @@ class Bot:
     RTM_READ_DELAY = 1
     MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-    scheduler = Scheduler()
-
-    def __init__(self, id, slack_client, db_conn=None):
+    def __init__(self, id, slack_client, scheduler=None, db_conn=None):
         """
         A Bot implementation for handling all aspects of reading, parsing, and executing commands.
 
@@ -25,6 +23,7 @@ class Bot:
         """
         self.id = id
         self.slack_client = slack_client
+        self.scheduler = scheduler
         self.db_conn = db_conn
         self.commands = list(cmds.COMMANDS.values()) # list of available commands
         self.commands.sort()
@@ -116,7 +115,7 @@ class Bot:
 
         return out
 
-    def handle_scheduled_command(self, command, channel, user, msg_type):
+    def handle_scheduled_command(self, command, channel, user, msg_type, args=None):
         """
         Proxy function for executing commands sent to the Bot via itself through the scheduler.
         Passes the result from handle_command() to the Slack Client's response_to_client() function
@@ -129,6 +128,9 @@ class Bot:
 
         Returns: None
         """
+        if args:
+            command = " ".join([command, args])
+
         response = self.handle_command(command, channel, user, msg_type)
         self.slack_client.response_to_client(response)
 

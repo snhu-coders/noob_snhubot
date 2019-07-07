@@ -8,6 +8,7 @@ venv*/
 __pycache__/
 junk/
 config/
+cfg/
 
 test_cmd.py
 pip-selfcheck.json
