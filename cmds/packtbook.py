@@ -61,6 +61,14 @@ def grab_element(delay, elem_function, attr):
 
 
 def get_requests():
+    """
+    Returns a dictionary containing the current entries
+    of the requests collection.
+
+    :return: collection of current requests from Mongo
+    :rtype: dict
+    """
+
     # See if there is a doc in the collection.  If not, insert a blank one.
     # Return the results
     if mongo.count_documents({}) == 0:
@@ -72,11 +80,42 @@ def get_requests():
     return requests
 
 
-def request_cleanup(requests):
+def request_cleanup(requests: dict):
+    """
+    Iterates the current collection of request entries, removing those
+    that no longer have requests.
+
+    :param requests: current collection of requests
+    :type requests: dict
+    :return: None
+    :rtype: None
+    """
+
     # Look to see if there are any words without users
     for word in [x for x in requests.keys() if x != "_id"]:
         if len(requests[word]) == 0:
             mongo.update_document_by_oid(requests["_id"], {"$unset": {word: ""}})
+
+
+def split_text(text: str):
+    """
+    Slightly more elaborate split function that automatically converts
+    the text to lowercase and accounts for random spaces
+
+    :param text: text to split
+    :type text: str
+    :return: list of split words
+    :rtype: list
+    """
+
+    # First, remove punctuation
+    sub_text = re.sub("[:,]", "", text)
+    # Then set everything to lowercase
+    sub_text = sub_text.lower()
+    # Split text, avoiding blanks
+    split_list = [x for x in sub_text.split(" ") if x != " "]
+    # Return the completed list
+    return split_list
 
 
 def execute(command, user):
@@ -87,11 +126,12 @@ def execute(command, user):
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
     # Split the given command here and set it all to lowercase
-    split_command = [x.lower() for x in command.split(" ")] if len(command.split(" ")) > 1 else None
+    # TODO: split 1
+    split_command = split_text(command)
 
     # Check to see if the user is trying a request.  If so, insert them
     # into the collection.  If not, proceed as normal
-    if split_command and split_command[1] == "request":
+    if len(split_command) > 1 and split_command[1] == "request":
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
         if do_requests:
             requests = get_requests()
@@ -99,7 +139,8 @@ def execute(command, user):
             if len(split_command) > 2:
                 if split_command[2] == "--delete":
                     # Gather the words, making sure there are no blanks
-                    words = [re.sub(r",", "", x) for x in split_command[3:] if len(re.sub(r",", "", x)) > 0]
+                    # TODO: split 2
+                    words = [x for x in split_command[3:]]
 
                     # For each word given, remove the user from the word's entry in the collection
                     if len(words) > 0:
@@ -136,7 +177,8 @@ def execute(command, user):
                     response = "Here are the current requests:\n\n" + "\n".join(f"`{word}`" for word in request_list)
                 else:
                     # Gather the words, making sure there are no blanks
-                    words = [re.sub(r",", "", x) for x in split_command[2:] if len(re.sub(r",", "", x)) > 0]
+                    # TODO: split 3
+                    words = [x for x in split_command[2:]]
 
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
@@ -180,7 +222,8 @@ def execute(command, user):
                 # Figure out if we need to tag anyone here.
                 requests = get_requests()
                 # Split the title so we can check words
-                title_split = [x.lower() for x in re.sub(r"[:,]", "", book_string).split(" ") if len(x) > 0]
+                # TODO: split 4
+                title_split = split_text(book_string)
                 # We'll use this list to tag users later
                 tag_list = []
 
