@@ -1,5 +1,6 @@
 import json
 import time
+import re
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -10,7 +11,7 @@ from noob_snhubot import DB_CONFIG
 
 command = 'packtbook'
 public = True
-do_requests = True
+do_requests = False
 opts = Options()
 opts.add_argument("--headless")
 opts.add_argument('--no-sandbox')
@@ -22,20 +23,20 @@ increment = 0.5
 # set the db and collection.  If not, disable the requests
 # functionality
 if DB_CONFIG:
-    # Grab the main mongo connection
-    from noob_snhubot import mongo
-
-    # Be sure we're using the right db
-    mongo.use_collection(DB_CONFIG["db"])
-
-    # Secondary check to see if a collection has been set.  If not
-    # disable the requests
     if "book_requests" in DB_CONFIG["collections"]:
-        mongo.use_collection(DB_CONFIG["collections"]["book_requests"])
-    else:
-        do_requests = False
-else:
-    do_requests = False
+        # Grab the main mongo connection
+        from BotHelper import MongoConnection
+
+        mongo = MongoConnection(
+            db=DB_CONFIG['db'],
+            collection=DB_CONFIG['collections']['book_requests'],
+            hostname=DB_CONFIG['hostname'],
+            port=DB_CONFIG['port']
+        )
+
+        # Enable requests if Mongo connects
+        if mongo.connected:
+            do_requests = True
 
 
 def grab_element(delay, elem_function, attr):
@@ -59,6 +60,25 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
+def get_requests():
+    # See if there is a doc in the collection.  If not, insert a blank one.
+    # Return the results
+    if mongo.count_documents({}) == 0:
+        mongo.insert_document({})
+        requests = mongo.find_document({})
+    else:
+        requests = mongo.find_document({})
+
+    return requests
+
+
+def request_cleanup(requests):
+    # Look to see if there are any words without users
+    for word in [x for x in requests.keys() if x != "_id"]:
+        if len(requests[word]) == 0:
+            mongo.update_document_by_oid(requests["_id"], {"$unset": {word: ""}})
+
+
 def execute(command, user):
     response = None
     attachment = None
@@ -74,30 +94,28 @@ def execute(command, user):
     if split_command and split_command[1] == "request":
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
         if do_requests:
-            # See if there is a doc in the collection.  If not, insert a blank one
-            if mongo.count_documents({}) == 0:
-                mongo.insert_document({})
-                requests = mongo.find_document({})
-            else:
-                requests = mongo.find_document({})
+            requests = get_requests()
 
             if len(split_command) > 2:
                 if split_command[2] == "--delete":
                     # Gather the words, making sure there are no blanks
-                    words = [x.replace(",", "") for x in split_command[3:] if len(x.replace(",", "")) > 0]
+                    words = [re.sub(r",", "", x) for x in split_command[3:] if len(re.sub(r",", "", x)) > 0]
 
                     # For each word given, remove the user from the word's entry in the collection
                     if len(words) > 0:
                         for word in words:
                             if word in requests:
-                                requests[word].remove(user)
-                                mongo.update_document_by_oid(requests["_id"], {"$set": {word: requests[word]}})
+                                if user in requests[word]:
+                                    requests[word].remove(user)
+                                    mongo.update_document_by_oid(requests["_id"], {"$set": {word: requests[word]}})
 
                         response = "I have removed your request(s) for: " + ", ".join(words)
                     else:
                         # If the words list is empty, then the user didn't provide any words
                         response = "The correct format for deleting requests is the following:\n\n" \
                             "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
+
+                    request_cleanup(requests)
                 elif split_command[2] == "--clear":
                     # For each word in the collection, remove the user from the list
                     for word in [x for x in requests.keys() if x != "_id"]:
@@ -106,6 +124,7 @@ def execute(command, user):
                             mongo.update_document_by_oid(requests["_id"], {"$set": {word: requests[word]}})
 
                     response = "All of your requests have been cleared."
+                    request_cleanup(requests)
                 elif split_command[2] == "--justforfun":
                     request_list = []
 
@@ -117,7 +136,7 @@ def execute(command, user):
                     response = "Here are the current requests:\n\n" + "\n".join(f"`{word}`" for word in request_list)
                 else:
                     # Gather the words, making sure there are no blanks
-                    words = [x.replace(",", "") for x in split_command[2:] if len(x.replace(",", "")) > 0]
+                    words = [re.sub(r",", "", x) for x in split_command[2:] if len(re.sub(r",", "", x)) > 0]
 
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
@@ -158,6 +177,18 @@ def execute(command, user):
             elif None in [book_string, img_src, time_string]:
                 response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
             else:
+                # Figure out if we need to tag anyone here.
+                requests = get_requests()
+                # Split the title so we can check words
+                title_split = [x.lower() for x in re.sub(r"[:,]", "", book_string).split(" ") if len(x) > 0]
+                # We'll use this list to tag users later
+                tag_list = []
+
+                # Figure out if we have to tag anyone
+                for word in title_split:
+                    if word in requests:
+                        tag_list += requests[word]
+
                 # Set the time here
                 time_split = [int(x) for x in time_string.split(":")]
                 times_left = []
@@ -182,7 +213,8 @@ def execute(command, user):
                 time_left_string = time_format.format(*times_left)
 
                 output = {
-                    "pretext": "The Packt Free Book of the Day is:",
+                    "pretext": f"The Packt Free Book of the Day is:",
+                    "text": f"Come and get it!\n{', '.join([f'<@{x}>' for x in tag_list])}",
                     "title": book_string,
                     "title_link": url,
                     "footer": "There's still {} to get this book!".format(time_left_string),
