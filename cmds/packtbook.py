@@ -133,7 +133,7 @@ def insert_user_into_request(requests: dict, word: str, insert_user: str):
     mongo.update_document_by_oid(requests["_id"], {"$push": {word: insert_user}})
 
 
-def remove_user_from_words(requests: dict, words: list, user: str):
+def remove_user_from_words(requests: dict, words: list, remove_user: str):
     """
     Removes the user from a single word in the collection of requests.  Also
     calls remove_request_word if the user was the sole user in the request.
@@ -142,8 +142,8 @@ def remove_user_from_words(requests: dict, words: list, user: str):
     :type requests: dict
     :param words: list of words from which to remove the user
     :type words: list
-    :param user: user to be removed from the request words
-    :type user: str
+    :param remove_user: user to be removed from the request words
+    :type remove_user: str
     :return: None
     :rtype: None
     """
@@ -151,7 +151,7 @@ def remove_user_from_words(requests: dict, words: list, user: str):
     # Process each of the words given
     for word in words:
         # Remove the user's association with the request word
-        requests[word].remove(user)
+        requests[word].remove(remove_user)
         mongo.update_document_by_oid(requests["_id"], {"$set": {word: requests[word]}})
 
         # Then check to see if the word's list is empty.  If so, remove it from the
