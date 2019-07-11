@@ -100,8 +100,7 @@ def insert_request_word(requests: dict, word: str, first_user: str):
 
 def remove_request_word(requests: dict, word: str):
     """
-    Iterates the current collection of request entries, removing those
-    that no longer have requests.
+    Removes the given word from the collection of requests
 
     :param requests: current collection of requests
     :type requests: dict
