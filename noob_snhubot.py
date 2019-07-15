@@ -1,8 +1,9 @@
 import argparse
 import datetime
 import os
-import time
 import sys
+import smtplib
+import time
 
 import websocket._exceptions as ws_exceptions
 import yaml
@@ -52,6 +53,7 @@ def load_config(config):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser(description='Launch the Noob SNHUBot application.')
+    parser.add_argument("-a", "--app_config", required=False, help="Relative path to Bot Application configuration file.")
     parser.add_argument("-m", "--mongo_config", required=False, help="Relative path to Mongo Database configuration file.")
     parser.add_argument("-c", "--sched_config", required=False, help="Relative path to Scheduler Configuration file.")
     parser.add_argument("-d", "--delay", required=False, default=1, type=int, help="Sets the delay between RTM reads.")
@@ -64,6 +66,14 @@ if __name__ == "__main__":
     # noise.add_argument("-v", "--verbosity", action="count", default=1)
     # noise.add_argument("-q", "--quiet", action="store_true")
     args = parser.parse_args()
+
+    # Process App Config or defaults
+    if args.app_config:
+        app_config = load_config(args.app_config)
+        bot_name = app_config.get('bot_name')
+    else:
+        app_config = None
+        bot_name = 'Noob SNHUbot'
 
     # Process Token
     if args.slack_config:
@@ -100,7 +110,7 @@ if __name__ == "__main__":
     # Primary Loop
     while True:
         if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):            
-            output("Noob SNHUbot connected and running!")
+            output("{} connected and running!".format(bot_name))
 
             # Instantiate Bot with user id from Web API method 'auth.test', and slack and mongo connections
             bot = Bot(slack_client.api_call("auth.test")["user_id"], slack_client, scheduler, mongo)
@@ -133,9 +143,33 @@ if __name__ == "__main__":
                 except ConnectionResetError as err:
                     output("Connection has been reset.\n{}\n{}".format(err, *sys.exc_info()[0:]))
                     break
-                except:
-                    output("Something awful happened!\n{}\n{}".format(*sys.exc_info()[0:]))
+                except Exception as err:
+                    output("Something awful happened!")
+                    output(err)
+                    output("{}".format(*sys.exc_info()[0:]))
+
                     bot.cleanup_your_mess()
+
+                    if app_config:
+                        try:
+                            smtp_server = smtplib.SMTP_SSL(app_config.get('smtp_address'), app_config.get('smtp_port'))
+                            smtp_server.ehlo()
+                            smtp_server.login(app_config.get('mail_user'), app_config.get('mail_pass'))
+
+                            subject = "{} is down!".format(bot_name)
+                            body = "{} has stopped running due to the following exception:".format(bot_name)
+
+                            email_text = "From: {}\nTo: {}\nSubject: {}\n\n{}\n{}\n{}".format(
+                                app_config.get('mail_user'), app_config.get('admin_emails'), subject,
+                                body, err, *sys.exc_info()[0:]
+                            )
+
+                            smtp_server.sendmail(app_config.get('mail_user'), app_config.get('admin_emails'), email_text)
+                        except Exception as err:
+                            output("Something REALLY awful happened while processing an EMAIL! OH NO!")
+                            output(err)
+                            output("{}".format(*sys.exc_info()[0:]))
+
                     sys.exit()
 
                 # schedule tasks if the bot is running a scheduler

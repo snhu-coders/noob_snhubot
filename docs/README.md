@@ -121,6 +121,16 @@ def execute(command, user, bot):
 The preferred method to configure the bot is now YAML. Configuration files can be created and passed as arguments
 when launching the application (see next section).
 
+Sample `app.yml`:
+```yaml
+bot_name:       "Noob SNHUbot"
+mail_user:     "example@example.com"
+mail_pass:     "SUPER_SECRET_PASSWORD"
+smtp_address:   "smtp.gmail.com"
+smtp_port:      465
+admin_emails:   ['example@example.com']
+```
+
 Sample `slack.yml`:
 
 ```yaml
@@ -144,13 +154,16 @@ With decoupling the Bot, Slack and Mongo tasks, the primary script, `noob_snhubo
 to process the primary loop.  Optional command line arguments have been added with the use of the `argparse` library.
 
 ```bash
-usage: noob_snhubot.py [-h] [-m MONGO_CONFIG] [-c SCHED_CONFIG] [-d DELAY]
+usage: noob_snhubot.py [-h] [-a APP_CONFIG] [-m MONGO_CONFIG]
+                       [-c SCHED_CONFIG] [-d DELAY]
                        [-s SLACK_CONFIG | -e SLACK_ENV_VARIABLE]
 
 Launch the Noob SNHUBot application.
 
 optional arguments:
   -h, --help            show this help message and exit
+  -a APP_CONFIG, --app_config APP_CONFIG
+                        Relative path to Bot Application configuration file.
   -m MONGO_CONFIG, --mongo_config MONGO_CONFIG
                         Relative path to Mongo Database configuration file.
   -c SCHED_CONFIG, --sched_config SCHED_CONFIG
@@ -166,8 +179,10 @@ optional arguments:
 ### Examples command execution
 
 ```bash
-python noob_snhubot.py --slack_config config\slack.yml --mongo_config config\mongo.yml
-python noob_snhubot.py -s config\slack.yml -m config\mongo.yml
+python noob_snhubot.py --app_config config\app.yml --slack_config config\slack.yml --mongo_config config\mongo.yml
+python noob_snhubot.py -a config\app.yml -s config\slack.yml -m config\mongo.yml
+
+python noob_snhubot.py -a config\app.yml
 
 python noob_snhubot.py -s config\slack.yml
 
