@@ -198,44 +198,53 @@ def execute(command, user):
             requests = get_requests()
 
             if len(split_command) > 2:
-                if split_command[2] == "--delete":
-                    # Gather the words, making sure there are no blanks
-                    words = [x for x in split_command[3:]]
+                # Check to see if the word after "request" starts with a symbol.  If the argument
+                # is something we recognize, then do the appropriate thing.  If not, tell the user
+                # to run the main command for options
+                if re.match(r"^[\W]", split_command[2]):
+                    if split_command[2] in ["-d", "-r", "--delete", "--remove"]:
+                        # Gather the words, making sure there are no blanks
+                        words = [x for x in split_command[3:]]
 
-                    # For each word given, remove the user from the word's entry in the collection
-                    if len(words) > 0:
+                        # For each word given, remove the user from the word's entry in the collection
+                        if len(words) > 0:
+                            remove_from_words = []
+
+                            for word in words:
+                                if word in requests:
+                                    if user in requests[word]:
+                                        remove_from_words.append(word)
+
+                            remove_user_from_words(requests, remove_from_words, user)
+                            response = "I have removed your request(s) for: " + ", ".join(words)
+                        else:
+                            # If the words list is empty, then the user didn't provide any words
+                            response = "The correct format for deleting requests is the following:\n\n" \
+                                "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
+                    elif split_command[2] in ["-c", "--clear"]:
                         remove_from_words = []
 
-                        for word in words:
-                            if word in requests:
-                                if user in requests[word]:
-                                    remove_from_words.append(word)
+                        # For each word in the collection, remove the user from the list
+                        for word in [x for x in requests.keys() if x != "_id"]:
+                            if user in requests[word]:
+                                remove_from_words.append(word)
 
                         remove_user_from_words(requests, remove_from_words, user)
-                        response = "I have removed your request(s) for: " + ", ".join(words)
+                        response = "All of your requests have been cleared."
+                    elif split_command[2] == "--justforfun":
+                        request_list = []
+
+                        # Here we are simply iterating through the collection to build a nice
+                        # list to print
+                        for word in [x for x in requests.keys() if x != "_id"]:
+                            request_list.append(f"{word}: {' '.join(requests[word])}")
+
+                        response = "Here are the current requests:\n\n" + "\n".join(f"`{word}`" for word in request_list)
+                    elif split_command[2] == "--admin":
+                        response = "You have selected the admin option.  Not yet implemented."
                     else:
-                        # If the words list is empty, then the user didn't provide any words
-                        response = "The correct format for deleting requests is the following:\n\n" \
-                            "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
-                elif split_command[2] == "--clear":
-                    remove_from_words = []
-
-                    # For each word in the collection, remove the user from the list
-                    for word in [x for x in requests.keys() if x != "_id"]:
-                        if user in requests[word]:
-                            remove_from_words.append(word)
-
-                    remove_user_from_words(requests, remove_from_words, user)
-                    response = "All of your requests have been cleared."
-                elif split_command[2] == "--justforfun":
-                    request_list = []
-
-                    # Here we are simply iterating through the collection to build a nice
-                    # list to print
-                    for word in [x for x in requests.keys() if x != "_id"]:
-                        request_list.append(f"{word}: {' '.join(requests[word])}")
-
-                    response = "Here are the current requests:\n\n" + "\n".join(f"`{word}`" for word in request_list)
+                        response = "Unknown symbol or argument detected.  Were you trying to delete or clear " \
+                            "requests?  Run `@NoobSNHUbot packtbook request` for a list of options."
                 else:
                     # Gather the words, making sure there are no blanks
                     words = [x for x in split_command[2:]]
@@ -253,9 +262,11 @@ def execute(command, user):
                     response = "You have made a book request for: " + ", ".join(words)
             else:
                 response = "The correct format is the following:\n\n" \
-                    "To add: `@NoobSNHUbot packtbook request words, to, add, here`\n" \
-                    "To delete: `@NoobSNHUbot packtbook request --delete words, to, delete, here`\n" \
-                    "To clear all: `@NoobSNHUbot packtbook request --clear`"
+                    "*To add:*\n`@NoobSNHUbot packtbook request words, to, add, here`\n" \
+                    "*To delete:*\n`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
+                    "`@NoobSNHUbot packtbook request --delete words, to, delete, here`\n" \
+                    "*To clear all*:\n`@NoobSNHUbot packtbook request -c`  or:\n" \
+                    "`@NoobSNHUbot packtbook request --clear`"
 
         else:
             response = "Requests are currently disabled.  Contact your workspace admin for information."
