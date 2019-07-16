@@ -12,6 +12,7 @@ from noob_snhubot import DB_CONFIG
 command = 'packtbook'
 public = True
 do_requests = False
+symbol_regex = re.compile(r"^[\W]+")
 opts = Options()
 opts.add_argument("--headless")
 opts.add_argument('--no-sandbox')
@@ -201,10 +202,10 @@ def execute(command, user):
                 # Check to see if the word after "request" starts with a symbol.  If the argument
                 # is something we recognize, then do the appropriate thing.  If not, tell the user
                 # to run the main command for options
-                if re.match(r"^[\W]", split_command[2]):
-                    if split_command[2] in ["-d", "-r", "--delete", "--remove"]:
+                if symbol_regex.match(split_command[2]):
+                    if split_command[2] in ["-d", "--delete"]:
                         # Gather the words, making sure there are no blanks
-                        words = [x for x in split_command[3:]]
+                        words = [x for x in split_command[3:] if not symbol_regex.match(x)]
 
                         # For each word given, remove the user from the word's entry in the collection
                         if len(words) > 0:
@@ -216,10 +217,15 @@ def execute(command, user):
                                         remove_from_words.append(word)
 
                             remove_user_from_words(requests, remove_from_words, user)
-                            response = "I have removed your request(s) for: " + ", ".join(words)
+
+                            if len(words) > 0:
+                                response = "I have deleted your request(s) for: " + ", ".join(words)
+                            else:
+                                response = "I did not delete anything.  Did you have symbols in the word(s)?"
                         else:
                             # If the words list is empty, then the user didn't provide any words
                             response = "The correct format for deleting requests is the following:\n\n" \
+                                "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
                                 "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
                     elif split_command[2] in ["-c", "--clear"]:
                         remove_from_words = []
@@ -247,7 +253,7 @@ def execute(command, user):
                             "requests?  Run `@NoobSNHUbot packtbook request` for a list of options."
                 else:
                     # Gather the words, making sure there are no blanks
-                    words = [x for x in split_command[2:]]
+                    words = [x for x in split_command[2:] if not symbol_regex.match(x)]
 
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
