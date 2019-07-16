@@ -60,13 +60,7 @@ Noob SNHUbot will respond to the following direct messages. To begin a conversat
     * `regex`: gives video links pertaining to regular expressions in Python. 
 * packtbook
   * Reaches out to the Packtbook Website to display the latest free book of the day.
-  * Accepts sub-command `request`:
-    * Calling `packbook request` allows a user to register keywords with the bot such that they get tagged if a book matching their keywords is posted in the channel.
-    * `packtbook request [list, of, words, here]` registers request words for a user. Words can be separated by either a space or a comma.
-    * `packtbook request --delete [list, of, words, here]` removes words from a user's requests.  Again, words can be separated by either a space or a comma.
-    * `packtbook request --clear` removes every request for the user running the command.
-    * `packtbook request --justforfun` simply prints out a mostly incomprehensible list of the current requests.
-    * Admin functionality may be added at a later date.
+  * `packtbook mini` will show the attachment in a smaller format.
   * Automatically scheduled to launch at 8:30PM Eastern Time.
 * roll `XdY[±Z]`
   * Rolls X number of Y-Sided dice with a + or - Z modifier!
@@ -122,12 +116,11 @@ mongo:
   collections:
     conn: conn_log
     cmds: cmd_log
-    book_requests: book_req
   hostname: my_db_server
   port: 27017
 ```
 
-Mongo DB logging is optional and can be omitted from the configuration file.  Also, `book_requests` can be omitted specifically to only disable book requests with the `packtbook` command.
+Mongo DB logging is optional and can be omitted from the configuration file.
 
 Additionally, the `config.yml` file can be omitted to fall back on utilizing the `SLACK_CLIENT` environment variable.
 
