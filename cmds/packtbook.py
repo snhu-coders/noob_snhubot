@@ -61,32 +61,10 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
-def get_requests():
-    """
-    Returns a dictionary containing the current entries
-    of the requests collection.
-
-    :return: collection of current requests from Mongo
-    :rtype: dict
-    """
-
-    # See if there is a doc in the collection.  If not, insert a blank one.
-    # Return the results
-    if mongo.count_documents({}) == 0:
-        mongo.insert_document({})
-        requests = mongo.find_document({})
-    else:
-        requests = mongo.find_document({})
-
-    return requests
-
-
-def insert_request_word(requests: dict, word: str, first_user: str):
+def insert_request_word(word: str, first_user: str):
     """
     Inserts a new word into the collection of requests
 
-    :param requests: current collection of requests
-    :type requests: dict
     :param word: word to insert into collection
     :type word: str
     :param first_user: first user to add to the request
@@ -96,33 +74,29 @@ def insert_request_word(requests: dict, word: str, first_user: str):
     """
 
     # Insert the word into the collection
-    mongo.update_document_by_oid(requests["_id"], {"$set": {word: [first_user]}})
+    mongo.insert_document({"word": word, "users": [first_user]})
 
 
-def remove_request_word(requests: dict, word: str):
+def remove_request_word(word: str):
     """
     Removes the given word from the collection of requests
 
-    :param requests: current collection of requests
-    :type requests: dict
     :param word: word to remove from collection
     :type word: str
     :return: None
     :rtype: None
     """
 
-    # Unset the field from the collection document
-    mongo.update_document_by_oid(requests["_id"], {"$unset": {word: ""}})
+    # Remove the word's document from the collection
+    mongo.delete_document({"word": word})
 
 
-def insert_user_into_request(requests: dict, word: str, insert_user: str):
+def insert_user_into_request(request: dict, insert_user: str):
     """
     Inserts a new user into an already existing request word
 
-    :param requests: current collection of requests
-    :type requests: dict
-    :param word: word to which the user should be attached
-    :type word: str
+    :param request: current request of word
+    :type request: dict
     :param insert_user: user to enter into the request
     :type insert_user: str
     :return: None
@@ -130,18 +104,18 @@ def insert_user_into_request(requests: dict, word: str, insert_user: str):
     """
 
     # Insert the user into the word
-    mongo.update_document_by_oid(requests["_id"], {"$push": {word: insert_user}})
+    request["users"].append(insert_user)
+    # Then update the document in the db
+    mongo.update_document_by_oid(request["_id"], {"$set": {"users": request["users"]}})
 
 
-def remove_user_from_words(requests: dict, words: list, remove_user: str):
+def remove_user_from_words(requests: list, remove_user: str):
     """
     Removes the user from a single word in the collection of requests.  Also
     calls remove_request_word if the user was the sole user in the request.
 
-    :param requests: current collection of requests
+    :param requests: collection of requests from which to remove the user
     :type requests: dict
-    :param words: list of words from which to remove the user
-    :type words: list
     :param remove_user: user to be removed from the request words
     :type remove_user: str
     :return: None
@@ -149,15 +123,16 @@ def remove_user_from_words(requests: dict, words: list, remove_user: str):
     """
 
     # Process each of the words given
-    for word in words:
+    for req in requests:
         # Remove the user's association with the request word
-        requests[word].remove(remove_user)
-        mongo.update_document_by_oid(requests["_id"], {"$set": {word: requests[word]}})
+        req["users"].remove(remove_user)
 
         # Then check to see if the word's list is empty.  If so, remove it from the
         # collection
-        if len(requests[word]) == 0:
-            remove_request_word(requests, word)
+        if len(req["users"]) == 0:
+            remove_request_word(req["word"])
+        else:
+            mongo.update_document_by_oid(req["_id"], {"$set": {"users": req["users"]}})
 
 
 def split_text(text: str):
@@ -196,8 +171,6 @@ def execute(command, user):
     if len(split_command) > 1 and split_command[1] == "request":
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
         if do_requests:
-            requests = get_requests()
-
             if len(split_command) > 2:
                 # Check to see if the word after "request" starts with a symbol.  If the argument
                 # is something we recognize, then do the appropriate thing.  If not, tell the user
@@ -210,13 +183,13 @@ def execute(command, user):
                         # For each word given, remove the user from the word's entry in the collection
                         if len(words) > 0:
                             remove_from_words = []
+                            req = mongo.find_documents({"word": {"$in": words}})
 
-                            for word in words:
-                                if word in requests:
-                                    if user in requests[word]:
-                                        remove_from_words.append(word)
+                            for word in req:
+                                if user in word["users"]:
+                                    remove_from_words.append(word)
 
-                            remove_user_from_words(requests, remove_from_words, user)
+                            remove_user_from_words(remove_from_words, user)
 
                             if len(words) > 0:
                                 response = "I have deleted your request(s) for: " + ", ".join(words)
@@ -228,24 +201,18 @@ def execute(command, user):
                                 "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
                                 "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
                     elif split_command[2] in ["-c", "--clear"]:
-                        remove_from_words = []
+                        req = mongo.find_documents({"users": user})
 
-                        # For each word in the collection, remove the user from the list
-                        for word in [x for x in requests.keys() if x != "_id"]:
-                            if user in requests[word]:
-                                remove_from_words.append(word)
-
-                        remove_user_from_words(requests, remove_from_words, user)
+                        remove_user_from_words(req, user)
                         response = "All of your requests have been cleared."
                     elif split_command[2] == "--justforfun":
-                        request_list = []
+                        request_list = mongo.find_documents({})
 
                         # Here we are simply iterating through the collection to build a nice
                         # list to print
-                        for word in [x for x in requests.keys() if x != "_id"]:
-                            request_list.append(f"{word}: {' '.join(requests[word])}")
 
-                        response = "Here are the current requests:\n\n" + "\n".join(f"`{word}`" for word in request_list)
+                        response = "Here are the current requests:\n\n" + \
+                                   "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in request_list])
                     elif split_command[2] == "--admin":
                         response = "You have selected the admin option.  Not yet implemented."
                     else:
@@ -258,12 +225,14 @@ def execute(command, user):
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
                     for word in words:
-                        if word in requests:
+                        req = mongo.find_document({"word": word})
+
+                        if req:
                             # Only add the user if they are not in there
-                            if user not in requests[word]:
-                                insert_user_into_request(requests, word, user)
+                            if user not in req["users"]:
+                                insert_user_into_request(req, user)
                         else:
-                            insert_request_word(requests, word, user)
+                            insert_request_word(word, user)
 
                     response = "You have made a book request for: " + ", ".join(words)
             else:
@@ -296,17 +265,16 @@ def execute(command, user):
             elif None in [book_string, img_src, time_string]:
                 response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
             else:
-                # Figure out if we need to tag anyone here.
-                requests = get_requests()
                 # Split the title so we can check words
                 title_split = split_text(book_string)
                 # We'll use this list to tag users later
-                tag_list = []
+                tag_list = set()
+                # Find the right documents
+                req = mongo.find_documents({"word": {"$in": title_split}})
 
                 # Figure out if we have to tag anyone
-                for word in title_split:
-                    if word in requests:
-                        tag_list += requests[word]
+                for word in req:
+                    tag_list.update(word["users"])
 
                 # Set the time here
                 time_split = [int(x) for x in time_string.split(":")]
