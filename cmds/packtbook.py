@@ -38,7 +38,7 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
-def execute(command, user):
+def execute(command, user, bot):
     response = None
     attachment = None
     delay = 10
