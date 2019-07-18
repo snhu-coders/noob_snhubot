@@ -12,7 +12,6 @@ cfg/
 
 test_cmd.py
 pip-selfcheck.json
-*.yml
 *.html
 *.sh
 debug.log
