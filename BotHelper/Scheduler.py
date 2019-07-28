@@ -30,9 +30,10 @@ class Scheduler:
         """
         Returns true or false if the a task is currently scheduled
 
-        """            
+        """
         if sched_time:
-            return any([task in v['arguments'] and sched_time == v['time'] for v in self.schedule.values()])
+            return any([task in v['arguments'] and sched_time == v['time']
+                        for v in self.schedule.values()])
 
         return any([task in v['arguments'] for v in self.schedule.values()])
 
@@ -50,7 +51,8 @@ class Scheduler:
                 if not v['thread'].is_alive():
                     self.schedule.pop(k, None)
 
-                    output("Scheduled Tasks: {}".format(self.get_num_of_tasks()))
+                    output("Scheduled Tasks: {}".format(
+                        self.get_num_of_tasks()))
 
     def add_task(self, id, thread, time, function, arguments):
         """
@@ -73,7 +75,8 @@ class Scheduler:
 
         output("Scheduled Tasks: {}".format(self.get_num_of_tasks()))
 
-    def schedule_cmd(self, command, channel, sched_time, function, user_id, event_type='message', args=None):
+    def schedule_cmd(self, command, channel, sched_time,
+                     function, user_id, event_type='message', args=None):
         """
         Creates a thread to execute a bot command at a specific time.
 
@@ -93,7 +96,7 @@ class Scheduler:
         # Add the task to the scheduler
         task = s.enterabs(
             sched_time,
-            1, 
+            1,
             function,
             (command, channel, user_id, event_type, args)
         )
@@ -104,11 +107,13 @@ class Scheduler:
         t.start()
 
         # Add task to SCHED
-        self.add_task(t.ident, t, task.time, task.action.__name__, task.argument)
+        self.add_task(t.ident, t, task.time,
+                      task.action.__name__, task.argument)
 
         print(task)
 
-    def process_schedule(self, bot_id, bot_commands, schedule_function, schedule_delay=600):
+    def process_schedule(self, bot_id, bot_commands,
+                         schedule_function, schedule_delay=600):
         """
         Read active configuration for Scheduler, determine next run iteration,
         and created the scheduled command as necessary within the allotted schedule_delay time period.
@@ -130,7 +135,8 @@ class Scheduler:
                     now = datetime.datetime.now()
 
                     # if within the schedule_delay time period
-                    if datetime.timedelta(seconds=schedule_delay) >= datetime.datetime.fromtimestamp(next_run) - now:
+                    if datetime.timedelta(
+                            seconds=schedule_delay) >= datetime.datetime.fromtimestamp(next_run) - now:
                         # if not already scheduled
                         if not self.has_task(cmd, next_run):
                             self.schedule_cmd(cmd, cmd_data.get("channel"), next_run, schedule_function,

@@ -8,7 +8,8 @@ from cmds import airspeed_velocity as cmd_airspeed_velocity
 
 class TestCmdAirspeedVelocity(object):
     cmd = "what is the airspeed velocity of an unladen swallow?"
-    uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9))
+    uid = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                  for _ in range(9))
     bot = Bot(uid, None, None)
 
     def test_command(self):
@@ -20,8 +21,8 @@ class TestCmdAirspeedVelocity(object):
     def test_output_types(self):
         response = cmd_airspeed_velocity.execute(self.cmd, self.uid, self.bot)
 
-        assert type(response) == tuple
-        assert type(response[0]) == str
+        assert isinstance(response, tuple)
+        assert isinstance(response[0], str)
         assert response[1] is None
 
     def test_output(self):

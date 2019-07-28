@@ -10,8 +10,9 @@ from cmds import greet_user as cmd_greet_user
 
 class TestCmdGreetUser(object):
     cmd = "greet user"
-    user = "UAP2Y9R96"  #gsfellis_snhu user
-    uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9))
+    user = "UAP2Y9R96"  # gsfellis_snhu user
+    uid = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                  for _ in range(9))
     slack_client = SlackConn(os.environ["SLACK_CLIENT"])
     bot = Bot(uid, slack_client, None)
     team_info = bot.slack_client.api_call("team.info")
@@ -38,16 +39,16 @@ class TestCmdGreetUser(object):
     def test_output_types(self):
         response = cmd_greet_user.execute(self.cmd, self.user, self.bot)
 
-        assert type(response) == tuple
-        assert type(response[0]) == str
-        assert type(response[1]) == str
+        assert isinstance(response, tuple)
+        assert isinstance(response[0], str)
+        assert isinstance(response[1], str)
 
     def test_output(self):
 
         greeting = """
-_Welcome to *{0}*, <@{1}>!_ 
+_Welcome to *{0}*, <@{1}>!_
 
-We're so happy that you've joined our community! Please introduce yourself in <#{3}>, and let us know what brings you to the team! 
+We're so happy that you've joined our community! Please introduce yourself in <#{3}>, and let us know what brings you to the team!
 *{0}* is a place for people to _*learn*_, _*collaborate*_, _*network*_, and just hang out. Please be kind to each other, and _encourage_ learning!
 
 I am <@{2}>, your friendly protocol droid. You may issue commands to me in any channel I'm present in _(even this one)_!

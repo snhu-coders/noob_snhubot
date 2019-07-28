@@ -9,7 +9,8 @@ from cmds import roll as cmd_roll
 
 class TestCmdRoll(object):
     cmd = "roll"
-    uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9))
+    uid = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                  for _ in range(9))
     bot = Bot(uid, None, None)
 
     def get_json_response(self, dice, total, rolls, modifier):
@@ -47,9 +48,9 @@ class TestCmdRoll(object):
 
     def test_output_types_base(self):
         response = cmd_roll.execute(self.cmd, self.uid, self.bot)
-        
-        assert type(response) == tuple
-        assert type(response[0]) == str
+
+        assert isinstance(response, tuple)
+        assert isinstance(response[0], str)
         assert response[1] is None
 
     def test_output_types_roll(self):
@@ -58,14 +59,15 @@ class TestCmdRoll(object):
 
         response = cmd_roll.execute(cmd, self.uid, self.bot)
 
-        assert type(response) == tuple
+        assert isinstance(response, tuple)
         assert response[0] is None
-        assert type(response[1]) == str
+        assert isinstance(response[1], str)
 
     def test_output_base(self):
         response = cmd_roll.execute(self.cmd, self.uid, self.bot)
 
-        expected = "That roll is not valid. Try `<@{}> roll help`".format(self.uid)
+        expected = "That roll is not valid. Try `<@{}> roll help`".format(
+            self.uid)
 
         assert response[0] == expected
 
@@ -158,7 +160,8 @@ class TestCmdRoll(object):
 
         for dice in dice_pools:
             cmd = "{} {}".format(self.cmd, dice)
-            expected = "That roll is not valid. Try `<@{}> roll help`".format(self.uid)
+            expected = "That roll is not valid. Try `<@{}> roll help`".format(
+                self.uid)
 
             response = cmd_roll.execute(cmd, self.uid, self.bot)
 
@@ -169,7 +172,8 @@ class TestCmdRoll(object):
 
         for dice in dice_pools:
             cmd = "{} {}".format(self.cmd, dice)
-            expected = "That roll is not valid. Try `<@{}> roll help`".format(self.uid)
+            expected = "That roll is not valid. Try `<@{}> roll help`".format(
+                self.uid)
 
             response = cmd_roll.execute(cmd, self.uid, self.bot)
 
@@ -180,7 +184,8 @@ class TestCmdRoll(object):
 
         for mod in modifiers:
             cmd = "{} 1d20{}".format(self.cmd, mod)
-            expected = "That roll is not valid. Try `<@{}> roll help`".format(self.uid)
+            expected = "That roll is not valid. Try `<@{}> roll help`".format(
+                self.uid)
 
             response = cmd_roll.execute(cmd, self.uid, self.bot)
 

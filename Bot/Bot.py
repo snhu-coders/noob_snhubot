@@ -25,7 +25,8 @@ class Bot:
         self.slack_client = slack_client
         self.scheduler = scheduler
         self.db_conn = db_conn
-        self.commands = list(cmds.COMMANDS.values()) # list of available commands
+        # list of available commands
+        self.commands = list(cmds.COMMANDS.values())
         self.commands.sort()
 
     def execute_command(self, command, commands, user, log_id=None):
@@ -44,11 +45,11 @@ class Bot:
         """
         response1 = None
         response2 = None
-        
-        for k, v in commands:     
+
+        for k, v in commands:
             if command.lower().startswith(v):
                 cmd = getattr(getattr(cmds, k), 'execute')
-                
+
                 response1, response2 = cmd(command, user, self)
 
         return response1, response2
@@ -67,8 +68,9 @@ class Bot:
             out (Response): A custom object representing the returned response, attachment and channel from
                             command execution
         """
-        # Default response is help text for the user    
-        default_response = "Does not compute. Try `<@{}> help` for command information.".format(self.id)
+        # Default response is help text for the user
+        default_response = "Does not compute. Try `<@{}> help` for command information.".format(
+            self.id)
 
         response = None
         attachment = None
@@ -76,46 +78,53 @@ class Bot:
         output(f"Command: '{command}' - User: {user} - Channel: {channel}")
 
         if self.db_conn:
-            #TODO: create a document generator
+            # TODO: create a document generator
             doc = {
-                'date': datetime.datetime.utcnow(), 
-                'command': command, 
-                'user': user, 
+                'date': datetime.datetime.utcnow(),
+                'command': command,
+                'user': user,
                 'channel': channel
-                }
+            }
 
-            result = self.db_conn.log_to_collection(doc, self.db_conn.CONFIG['db'], self.db_conn.CONFIG['collections']['cmds'])
+            result = self.db_conn.log_to_collection(
+                doc, self.db_conn.CONFIG['db'], self.db_conn.CONFIG['collections']['cmds'])
 
-            #TODO: Fix logging output for DB stuff
-            output(f"[{self.db_conn.db}: {self.db_conn.collection}] - Inserted: {result.inserted_id}")
+            # TODO: Fix logging output for DB stuff
+            output(
+                f"[{self.db_conn.db}: {self.db_conn.collection}] - Inserted: {result.inserted_id}")
 
         if msg_type == "message":
-            response, attachment = self.execute_command(command, cmds.COMMANDS.items(), user)
+            response, attachment = self.execute_command(
+                command, cmds.COMMANDS.items(), user)
         else:
-            response, channel = self.execute_command(command, cmds.COMMANDS_HIDDEN.items(), user)
+            response, channel = self.execute_command(
+                command, cmds.COMMANDS_HIDDEN.items(), user)
 
-        #TODO: Make a better name for out
+        # TODO: Make a better name for out
         out = Response(channel, response or default_response, attachment)
 
         # Log response
         if self.db_conn:
             response_type = "attachment" if out.attachment else "response"
             update = {'$set': {
-                    'response': {
+                'response': {
                     'date': datetime.datetime.now(),
                     'type': response_type,
-                    'message': out.attachment or out.message or default_response, 
+                    'message': out.attachment or out.message or default_response,
                     'channel': out.channel
                 }
             }}
-            
-            result = self.db_conn.update_document_by_oid(result.inserted_id, update)
-             
-            output(f"[{self.db_conn.db}: {self.db_conn.collection}] - Updated: {result.raw_result}")
+
+            result = self.db_conn.update_document_by_oid(
+                result.inserted_id, update)
+
+            output(
+                f"[{self.db_conn.db}: {self.db_conn.collection}] - Updated: {result.raw_result}")
 
         return out
 
-    def handle_scheduled_command(self, command, channel, user, msg_type, args=None):
+    def handle_scheduled_command(
+            self, command, channel, user, msg_type, args=None):
         """
         Proxy function for executing commands sent to the Bot via itself through the scheduler.
         Passes the result from handle_command() to the Slack Client's response_to_client() function
@@ -139,7 +148,10 @@ class Bot:
         Cleanup logic to be called when the Bot/program is terminating
         """
 
-        # TODO: I believe this works, but urllib3.connectionpool retries to connect 3 times after close. Might be fine.
+        # TODO: I believe this works, but urllib3.connectionpool retries to
+        # connect 3 times after close. Might be fine.
         output("Closing Chrome driver")
         driver = getattr(getattr(cmds, 'packtbook'), 'driver')
-        driver.quit()
+
+        if driver:
+            driver.quit()

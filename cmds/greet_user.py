@@ -28,9 +28,9 @@ def execute(command, user, bot):
     im_channel = bot.slack_client.api_call("im.open", user=user)
 
     greeting = """
-_Welcome to *{0}*, <@{1}>!_ 
+_Welcome to *{0}*, <@{1}>!_
 
-We're so happy that you've joined our community! Please introduce yourself in <#{3}>, and let us know what brings you to the team! 
+We're so happy that you've joined our community! Please introduce yourself in <#{3}>, and let us know what brings you to the team!
 *{0}* is a place for people to _*learn*_, _*collaborate*_, _*network*_, and just hang out. Please be kind to each other, and _encourage_ learning!
 
 I am <@{2}>, your friendly protocol droid. You may issue commands to me in any channel I'm present in _(even this one)_!

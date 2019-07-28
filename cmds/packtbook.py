@@ -2,19 +2,23 @@ import json
 import time
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from urllib.error import HTTPError
 
 command = 'packtbook'
 public = True
-opts = Options()
-opts.add_argument("--headless")
-opts.add_argument('--no-sandbox')
-opts.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome(options=opts)
 increment = 0.5
+
+try:
+    opts = Options()
+    opts.add_argument("--headless")
+    opts.add_argument('--no-sandbox')
+    opts.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(options=opts)
+except WebDriverException as e:
+    print("Error encountered while starting the ChromeDriver:\n{}".format(e))
+    driver = None
 
 
 def grab_element(delay, elem_function, attr):
@@ -47,20 +51,26 @@ def execute(command, user, bot):
 
     # Simple catch all error logic
     try:
-        # Set the driver to wait a little bit before assuming elements are not present, then grab the page:
+        # Set the driver to wait a little bit before assuming elements are not
+        # present, then grab the page:
         driver.implicitly_wait(delay)
         driver.get(url)
 
         # Get the elements
-        warning_message = grab_element(2, driver.find_element_by_css_selector, ".message.warning")
-        book_string = grab_element(delay, driver.find_element_by_class_name, "product__title")
-        img_src = grab_element(delay, driver.find_element_by_class_name, "product__img")
-        time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer")
+        warning_message = grab_element(
+            2, driver.find_element_by_css_selector, ".message.warning")
+        book_string = grab_element(
+            delay, driver.find_element_by_class_name, "product__title")
+        img_src = grab_element(
+            delay, driver.find_element_by_class_name, "product__img")
+        time_string = grab_element(
+            delay, driver.find_element_by_class_name, "countdown__timer")
 
         # Check to see if the warning message was present
         if warning_message:
             response = warning_message
-        # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
+        # If any of the regular elements fail, tell the people to try again.
+        # If not, do the attachment
         elif None in [book_string, img_src, time_string]:
             response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
         else:
@@ -107,7 +117,7 @@ def execute(command, user, bot):
 
         response = "Looks like the operation timed out.  Please try again later."
     except Exception as err:
-        print(err)
+        print(err.__class__, ":", err)
 
         response = 'I have failed my human overlords!\nYou should be able to find the Packt Free' \
                    ' Book of the day here: {}'.format(url)

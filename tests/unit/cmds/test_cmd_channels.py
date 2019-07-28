@@ -11,7 +11,8 @@ from cmds import channels as cmd_channels
 
 class TestCmdChannels(object):
     cmd = "channels"
-    uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9))
+    uid = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                  for _ in range(9))
     slack_client = SlackConn(os.environ["SLACK_CLIENT"])
     bot = Bot(uid, slack_client, None)
     channels_info = bot.slack_client.api_call("channels.list")
@@ -25,14 +26,15 @@ class TestCmdChannels(object):
     def test_output_types(self):
         response = cmd_channels.execute(self.cmd, self.uid, self.bot)
 
-        assert type(response) == tuple
-        assert type(response[0]) == str
+        assert isinstance(response, tuple)
+        assert isinstance(response[0], str)
         assert response[1] is None
 
     def test_output(self):
         response = cmd_channels.execute(self.cmd, self.uid, self.bot)
 
-        assert response[0].startswith("\n_*Here's a detailed list of our channels for your convenience.*_")
+        assert response[0].startswith(
+            "\n_*Here's a detailed list of our channels for your convenience.*_")
 
         channel_match = re.compile(r"<#[0-9A-Z]{9}>")
         matches = channel_match.findall(response[0])

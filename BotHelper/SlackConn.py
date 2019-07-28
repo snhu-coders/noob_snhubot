@@ -27,8 +27,9 @@ class SlackConn(SlackClient):
                 if user_id == bot_id:
                     return message, event["channel"], event["user"], event["type"]
             elif event["type"] == "team_join":
-                return "greet user", None, event["user"].get("id"), event["type"]
-        
+                return "greet user", None, event["user"].get(
+                    "id"), event["type"]
+
         return None, None, None, None
 
     def parse_direct_mention(self, message_text):
@@ -44,8 +45,10 @@ class SlackConn(SlackClient):
         """
         matches = re.search(self.MENTION_REGEX, message_text)
 
-        # the first group contains the username, the second groups contains the remaining message
-        return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
+        # the first group contains the username, the second groups contains the
+        # remaining message
+        return (matches.group(1), matches.group(
+            2).strip()) if matches else (None, None)
 
     def response_to_client(self, response):
         """
@@ -58,7 +61,7 @@ class SlackConn(SlackClient):
             None
         """
         if response.attachment:
-            output(f"Sending attachment: {response.attachment}")        
+            output(f"Sending attachment: {response.attachment}")
             self.api_call(
                 "chat.postMessage",
                 channel=response.channel,
