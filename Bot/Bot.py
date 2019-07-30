@@ -29,6 +29,13 @@ class Bot:
         self.commands = list(cmds.COMMANDS.values())
         self.commands.sort()
 
+        # If there is a database config, check to see if book requests are enabled
+        if self.db_conn:
+            if "book_requests" in self.db_conn.CONFIG["collections"]:
+                self.requests_enabled = True
+            else:
+                self.requests_enabled = False
+
     def execute_command(self, command, commands, user, log_id=None):
         """
         Executes the command and returns responses received from command output.

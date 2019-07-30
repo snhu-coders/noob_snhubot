@@ -2,16 +2,16 @@ import json
 import time
 import re
 
+from BotHelper.BookRequester import *
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from urllib.error import HTTPError
-from noob_snhubot import DB_CONFIG
 
 command = 'packtbook'
 public = True
-do_requests = False
+
 symbol_regex = re.compile(r"^[\W]+")
 opts = Options()
 opts.add_argument("--headless")
@@ -19,25 +19,6 @@ opts.add_argument('--no-sandbox')
 opts.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(chrome_options=opts)
 increment = 0.5
-
-# Check to see if we're using a Mongo configuration.  If so,
-# set the db and collection.  If not, disable the requests
-# functionality
-if DB_CONFIG:
-    if "book_requests" in DB_CONFIG["collections"]:
-        # Grab the main mongo connection
-        from BotHelper import MongoConnection
-
-        mongo = MongoConnection(
-            db=DB_CONFIG['db'],
-            collection=DB_CONFIG['collections']['book_requests'],
-            hostname=DB_CONFIG['hostname'],
-            port=DB_CONFIG['port']
-        )
-
-        # Enable requests if Mongo connects
-        if mongo.connected:
-            do_requests = True
 
 
 def grab_element(delay, elem_function, attr):
@@ -61,78 +42,7 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
-def insert_request_word(word: str, first_user: str):
-    """
-    Inserts a new word into the collection of requests
 
-    :param word: word to insert into collection
-    :type word: str
-    :param first_user: first user to add to the request
-    :type first_user: str
-    :return: None
-    :rtype: None
-    """
-
-    # Insert the word into the collection
-    mongo.insert_document({"word": word, "users": [first_user]})
-
-
-def remove_request_word(word: str):
-    """
-    Removes the given word from the collection of requests
-
-    :param word: word to remove from collection
-    :type word: str
-    :return: None
-    :rtype: None
-    """
-
-    # Remove the word's document from the collection
-    mongo.delete_document({"word": word})
-
-
-def insert_user_into_request(request: dict, insert_user: str):
-    """
-    Inserts a new user into an already existing request word
-
-    :param request: current request of word
-    :type request: dict
-    :param insert_user: user to enter into the request
-    :type insert_user: str
-    :return: None
-    :rtype: None
-    """
-
-    # Insert the user into the word
-    request["users"].append(insert_user)
-    # Then update the document in the db
-    mongo.update_document_by_oid(request["_id"], {"$set": {"users": request["users"]}})
-
-
-def remove_user_from_words(requests: list, remove_user: str):
-    """
-    Removes the user from a single word in the collection of requests.  Also
-    calls remove_request_word if the user was the sole user in the request.
-
-    :param requests: collection of requests from which to remove the user
-    :type requests: dict
-    :param remove_user: user to be removed from the request words
-    :type remove_user: str
-    :return: None
-    :rtype: None
-    """
-
-    # Process each of the words given
-    for req in requests:
-        # Remove the user's association with the request word
-        req["users"].remove(remove_user)
-
-        # Then check to see if the word's list is empty.  If so, remove it from the
-        # collection
-        if len(req["users"]) == 0:
-            remove_request_word(req["word"])
-        else:
-            mongo.update_document_by_oid(req["_id"], {"$set": {"users": req["users"]}})
 
 
 def split_text(text: str):
@@ -156,12 +66,16 @@ def split_text(text: str):
     return split_list
 
 
-def execute(command, user):
+def execute(command, user, bot):
     response = None
     attachment = None
     delay = 10
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
+
+    if bot.requests_enabled:
+        bot.db_conn.use_db(bot.db_conn.CONFIG["db"])
+        bot.db_conn.use_collection(bot.db_conn.CONFIG["collections"]["book_requests"])
 
     # Split the given command here and set it all to lowercase
     split_command = split_text(command)
@@ -170,7 +84,7 @@ def execute(command, user):
     # into the collection.  If not, proceed as normal
     if len(split_command) > 1 and split_command[1] == "request":
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
-        if do_requests:
+        if bot.requests_enabled:
             if len(split_command) > 2:
                 # Check to see if the word after "request" starts with a symbol.  If the argument
                 # is something we recognize, then do the appropriate thing.  If not, tell the user
@@ -183,13 +97,13 @@ def execute(command, user):
                         # For each word given, remove the user from the word's entry in the collection
                         if len(words) > 0:
                             remove_from_words = []
-                            req = mongo.find_documents({"word": {"$in": words}})
+                            req = bot.db_conn.find_documents({"word": {"$in": words}})
 
                             for word in req:
                                 if user in word["users"]:
                                     remove_from_words.append(word)
 
-                            remove_user_from_words(remove_from_words, user)
+                            remove_user_from_words(remove_from_words, user, bot.db_conn)
 
                             if len(words) > 0:
                                 response = "I have deleted your request(s) for: " + ", ".join(words)
@@ -201,12 +115,12 @@ def execute(command, user):
                                 "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
                                 "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
                     elif split_command[2] in ["-c", "--clear"]:
-                        req = mongo.find_documents({"users": user})
+                        req = bot.db_conn.find_documents({"users": user})
 
-                        remove_user_from_words(req, user)
+                        remove_user_from_words(req, user, bot.db_conn)
                         response = "All of your requests have been cleared."
                     elif split_command[2] == "--justforfun":
-                        request_list = mongo.find_documents({})
+                        request_list = bot.db_conn.find_documents({})
 
                         # Here we are simply iterating through the collection to build a nice
                         # list to print
@@ -225,14 +139,14 @@ def execute(command, user):
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
                     for word in words:
-                        req = mongo.find_document({"word": word})
+                        req = bot.db_conn.find_document({"word": word})
 
                         if req:
                             # Only add the user if they are not in there
                             if user not in req["users"]:
-                                insert_user_into_request(req, user)
+                                insert_user_into_request(req, user, bot.db_conn)
                         else:
-                            insert_request_word(word, user)
+                            insert_request_word(word, user, bot.db_conn)
 
                     response = "You have made a book request for: " + ", ".join(words)
             else:
@@ -270,7 +184,7 @@ def execute(command, user):
                 # We'll use this list to tag users later
                 tag_list = set()
                 # Find the right documents
-                req = mongo.find_documents({"word": {"$in": title_split}})
+                req = bot.db_conn.find_documents({"word": {"$in": title_split}})
 
                 # Figure out if we have to tag anyone
                 for word in req:
