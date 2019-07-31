@@ -93,8 +93,8 @@ class Bot:
                 'channel': channel
             }
 
-            result = self.db_conn.log_to_collection(
-                doc, self.db_conn.CONFIG['db'], self.db_conn.CONFIG['collections']['cmds'])
+            result = self.db_conn.collection_log_remove_find(
+                doc, self.db_conn.CONFIG['db'], self.db_conn.CONFIG['collections']['cmds'], self.db_conn.insert_document)
 
             # TODO: Fix logging output for DB stuff
             output(
@@ -150,7 +150,7 @@ class Bot:
         response = self.handle_command(command, channel, user, msg_type)
         self.slack_client.response_to_client(response)
 
-    def cleanup_your_mess(self):
+    def cleanup_your_mess():
         """
         Cleanup logic to be called when the Bot/program is terminating
         """

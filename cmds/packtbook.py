@@ -42,9 +42,6 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
-
-
-
 def split_text(text: str):
     """
     Slightly more elaborate split function that automatically converts
@@ -179,16 +176,22 @@ def execute(command, user, bot):
             elif None in [book_string, img_src, time_string]:
                 response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
             else:
-                # Split the title so we can check words
-                title_split = split_text(book_string)
-                # We'll use this list to tag users later
                 tag_list = set()
-                # Find the right documents
-                req = bot.db_conn.find_documents({"word": {"$in": title_split}})
 
-                # Figure out if we have to tag anyone
-                for word in req:
-                    tag_list.update(word["users"])
+                if bot.requests_enabled:
+                    # Split the title so we can check words
+                    title_split = split_text(book_string)
+                    # Find the right documents
+                    req = bot.db_conn.collection_log_remove_find(
+                        {"word": {"$in": title_split}},
+                        bot.db_conn.CONFIG["db"],
+                        bot.db_conn.CONFIG["collections"]["book_requests"],
+                        bot.db_conn.find_documents
+                    )
+
+                    # Figure out if we have to tag anyone
+                    for word in req:
+                        tag_list.update(word["users"])
 
                 # Set the time here
                 time_split = [int(x) for x in time_string.split(":")]

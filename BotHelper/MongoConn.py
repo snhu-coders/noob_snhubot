@@ -7,11 +7,19 @@ class MongoConn(MongoConnection):
         super().__init__(**kwargs)
         self.CONFIG = config
 
-    def log_to_collection(self, doc, db, collection):
+    def ensure_correct_docs(self, db, collection):
         if self.db != db:
             self.use_db(db)
 
         if self.collection != collection:
             self.use_collection(collection)
 
-        return self.insert_document(doc)
+    def collection_log_remove_find(self, doc, db, collection, func):
+        self.ensure_correct_docs(db, collection)
+
+        return func(doc)
+
+    def collection_update(self, doc_id, doc, db, collection, func):
+        self.ensure_correct_docs(db, collection)
+
+        return func(doc_id, doc)
