@@ -4,21 +4,24 @@ import re
 
 from BotHelper.BookRequester import *
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from urllib.error import HTTPError
 
 command = 'packtbook'
 public = True
-
-symbol_regex = re.compile(r"^[\W]+")
-opts = Options()
-opts.add_argument("--headless")
-opts.add_argument('--no-sandbox')
-opts.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome(chrome_options=opts)
 increment = 0.5
+symbol_regex = re.compile(r"^[\W]+")
+
+try:
+    opts = Options()
+    opts.add_argument("--headless")
+    opts.add_argument('--no-sandbox')
+    opts.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(options=opts)
+except WebDriverException as e:
+    print("Error encountered while starting the ChromeDriver:\n{}".format(e))
+    driver = None
 
 
 def grab_element(delay, elem_function, attr):
