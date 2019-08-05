@@ -73,10 +73,6 @@ def execute(command, user, bot):
     time_attrs = ["hours", "minutes", "seconds"]
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
-    if bot.requests_enabled:
-        bot.db_conn.use_db(bot.db_conn.CONFIG["db"])
-        bot.db_conn.use_collection(bot.db_conn.CONFIG["collections"]["book_requests"])
-
     # Split the given command here and set it all to lowercase
     split_command = split_text(command)
 
@@ -84,7 +80,7 @@ def execute(command, user, bot):
     # into the collection.  If not, proceed as normal
     if len(split_command) > 1 and split_command[1] == "request":
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
-        if bot.requests_enabled:
+        if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
             if len(split_command) > 2:
                 # Check to see if the word after "request" starts with a symbol.  If the argument
                 # is something we recognize, then do the appropriate thing.  If not, tell the user
@@ -158,7 +154,7 @@ def execute(command, user, bot):
                             {"word": word},
                             bot.db_conn.CONFIG["db"],
                             bot.db_conn.CONFIG["collections"]["book_requests"],
-                            bot.db_conn.find_documents
+                            bot.db_conn.find_document
                         )
 
                         if req:
@@ -201,7 +197,7 @@ def execute(command, user, bot):
             else:
                 tag_list = set()
 
-                if bot.requests_enabled:
+                if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
                     # Split the title so we can check words
                     title_split = split_text(book_string)
                     # Find the right documents
