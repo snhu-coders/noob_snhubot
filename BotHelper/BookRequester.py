@@ -20,11 +20,10 @@ def insert_request_word(word: str, first_user: str, conn: MongoConn):
     """
 
     # Insert the word into the collection
-    conn.collection_log_remove_find(
+    conn.insert_document(
         {"word": word, "users": [first_user]},
-        conn.CONFIG["db"],
-        conn.CONFIG["collections"]["book_requests"],
-        conn.insert_document
+        db=conn.CONFIG["db"],
+        collection=conn.CONFIG["collections"]["book_requests"],
     )
 
 
@@ -41,11 +40,10 @@ def remove_request_word(word: str, conn: MongoConn):
     """
 
     # Remove the word's document from the collection
-    conn.collection_log_remove_find(
+    conn.delete_document(
         {"word": word},
-        conn.CONFIG["db"],
-        conn.CONFIG["collections"]["book_requests"],
-        conn.delete_document
+        db=conn.CONFIG["db"],
+        collection=conn.CONFIG["collections"]["book_requests"]
     )
 
 
@@ -66,12 +64,11 @@ def insert_user_into_request(request: dict, insert_user: str, conn: MongoConn):
     # Insert the user into the word
     request["users"].append(insert_user)
     # Then update the document in the db
-    conn.collection_update(
+    conn.update_document_by_oid(
         request["_id"],
         {"$set": {"users": request["users"]}},
-        conn.CONFIG["db"],
-        conn.CONFIG["collections"]["book_requests"],
-        conn.update_document_by_oid
+        db=conn.CONFIG["db"],
+        collection=conn.CONFIG["collections"]["book_requests"]
     )
 
 
@@ -100,10 +97,9 @@ def remove_user_from_words(requests: list, remove_user: str, conn: MongoConn):
         if len(req["users"]) == 0:
             remove_request_word(req["word"], conn)
         else:
-            conn.collection_update(
+            conn.update_document_by_oid(
                 req["_id"],
                 {"$set": {"users": req["users"]}},
-                conn.CONFIG["db"],
-                conn.CONFIG["collections"]["book_requests"],
-                conn.update_document_by_oid
+                db=conn.CONFIG["db"],
+                collection=conn.CONFIG["collections"]["book_requests"]
             )

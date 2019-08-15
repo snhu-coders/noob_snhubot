@@ -18,11 +18,10 @@ def execute(command, user, bot):
         bot_id = bot.id
 
         # get all documents
-        data = bot.db_conn.collection_log_remove_find(
+        data = bot.db_conn.find_documents(
             {},
-            "catalog",
-            "subjects",
-            bot.db_conn.find_documents
+            db="catalog",
+            collection="subjects",
         )
 
         # create Catalog using HashTable implementation

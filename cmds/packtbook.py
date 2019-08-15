@@ -93,11 +93,10 @@ def execute(command, user, bot):
                         # For each word given, remove the user from the word's entry in the collection
                         if len(words) > 0:
                             remove_from_words = []
-                            req = bot.db_conn.collection_log_remove_find(
+                            req = bot.db_conn.find_documents(
                                 {"word": {"$in": words}},
-                                bot.db_conn.CONFIG["db"],
-                                bot.db_conn.CONFIG["collections"]["book_requests"],
-                                bot.db_conn.find_documents
+                                db=bot.db_conn.CONFIG["db"],
+                                collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                             )
 
                             for word in req:
@@ -116,21 +115,19 @@ def execute(command, user, bot):
                                 "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
                                 "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
                     elif split_command[2] in ["-c", "--clear"]:
-                        req = bot.db_conn.collection_log_remove_find(
+                        req = bot.db_conn.find_documents(
                             {"users": user},
-                            bot.db_conn.CONFIG["db"],
-                            bot.db_conn.CONFIG["collections"]["book_requests"],
-                            bot.db_conn.find_documents
+                            db=bot.db_conn.CONFIG["db"],
+                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                         )
 
                         remove_user_from_words(req, user, bot.db_conn)
                         response = "All of your requests have been cleared."
                     elif split_command[2] == "--justforfun":
-                        request_list = bot.db_conn.collection_log_remove_find(
+                        request_list = bot.db_conn.find_documents(
                             {},
-                            bot.db_conn.CONFIG["db"],
-                            bot.db_conn.CONFIG["collections"]["book_requests"],
-                            bot.db_conn.find_documents
+                            db=bot.db_conn.CONFIG["db"],
+                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                         )
 
                         # Here we are simply iterating through the collection to build a nice
@@ -150,11 +147,10 @@ def execute(command, user, bot):
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
                     for word in words:
-                        req = bot.db_conn.collection_log_remove_find(
+                        req = bot.db_conn.find_document(
                             {"word": word},
-                            bot.db_conn.CONFIG["db"],
-                            bot.db_conn.CONFIG["collections"]["book_requests"],
-                            bot.db_conn.find_document
+                            db=bot.db_conn.CONFIG["db"],
+                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                         )
 
                         if req:
@@ -201,11 +197,10 @@ def execute(command, user, bot):
                     # Split the title so we can check words
                     title_split = split_text(book_string)
                     # Find the right documents
-                    req = bot.db_conn.collection_log_remove_find(
+                    req = bot.db_conn.find_documents(
                         {"word": {"$in": title_split}},
-                        bot.db_conn.CONFIG["db"],
-                        bot.db_conn.CONFIG["collections"]["book_requests"],
-                        bot.db_conn.find_documents
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                     )
 
                     # Figure out if we have to tag anyone
