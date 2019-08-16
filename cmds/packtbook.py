@@ -2,7 +2,6 @@ import json
 import time
 import re
 
-from BotHelper.BookRequester import *
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -101,10 +100,25 @@ def execute(command, user, bot):
 
                             for word in req:
                                 if user in word["users"]:
-                                    remove_from_words.append(word)
+                                    word["users"].remove(user)
 
-                            remove_user_from_words(remove_from_words, user, bot.db_conn)
+                                    # Then check to see if the word's list is empty.  If so, remove it from the
+                                    # collection
+                                    if len(word["users"]) == 0:
+                                        bot.db_conn.delete_document(
+                                            {"word": word["word"]},
+                                            db=bot.db_conn.CONFIG["db"],
+                                            collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                        )
+                                    else:
+                                        bot.db_conn.update_document_by_oid(
+                                            word["_id"],
+                                            {"$set": {"users": word["users"]}},
+                                            db=bot.db_conn.CONFIG["db"],
+                                            collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                        )
 
+                            # TODO: This probably needs to change
                             if len(words) > 0:
                                 response = "I have deleted your request(s) for: " + ", ".join(words)
                             else:
@@ -121,7 +135,26 @@ def execute(command, user, bot):
                             collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                         )
 
-                        remove_user_from_words(req, user, bot.db_conn)
+                        for word in req:
+                            if user in word["users"]:
+                                word["users"].remove(user)
+
+                                # Then check to see if the word's list is empty.  If so, remove it from the
+                                # collection
+                                if len(word["users"]) == 0:
+                                    bot.db_conn.delete_document(
+                                        {"word": word["word"]},
+                                        db=bot.db_conn.CONFIG["db"],
+                                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                    )
+                                else:
+                                    bot.db_conn.update_document_by_oid(
+                                        word["_id"],
+                                        {"$set": {"users": word["users"]}},
+                                        db=bot.db_conn.CONFIG["db"],
+                                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                    )
+
                         response = "All of your requests have been cleared."
                     elif split_command[2] == "--justforfun":
                         request_list = bot.db_conn.find_documents(
@@ -156,9 +189,21 @@ def execute(command, user, bot):
                         if req:
                             # Only add the user if they are not in there
                             if user not in req["users"]:
-                                insert_user_into_request(req, user, bot.db_conn)
+                                # Insert the user into the word
+                                req["users"].append(user)
+                                # Then update the document in the db
+                                bot.db_conn.update_document_by_oid(
+                                    req["_id"],
+                                    {"$set": {"users": req["users"]}},
+                                    db=bot.db_conn.CONFIG["db"],
+                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                )
                         else:
-                            insert_request_word(word, user, bot.db_conn)
+                            bot.db_conn.insert_document(
+                                {"word": word, "users": [user]},
+                                db=bot.db_conn.CONFIG["db"],
+                                collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+                            )
 
                     response = "You have made a book request for: " + ", ".join(words)
             else:
