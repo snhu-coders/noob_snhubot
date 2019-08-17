@@ -10,6 +10,15 @@ from urllib.error import HTTPError
 command = 'packtbook'
 public = True
 increment = 0.5
+
+
+# The following regex is designed to separate all of the words given
+# for requests while accounting for phrases indicated by "phrase".
+separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
+
+# This regex will be used to determine if any request words begin with
+# symbols.  We will not register those because they are probably intended
+# as arguments.
 symbol_regex = re.compile(r"^[\W]+")
 
 try:
@@ -73,7 +82,7 @@ def execute(command, user, bot):
     url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
     # Split the given command here and set it all to lowercase
-    split_command = split_text(command)
+    split_command = separator_regex.findall(command)
 
     # Check to see if the user is trying a request.  If so, insert them
     # into the collection.  If not, proceed as normal
@@ -81,56 +90,19 @@ def execute(command, user, bot):
         # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
         if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
             if len(split_command) > 2:
-                # Check to see if the word after "request" starts with a symbol.  If the argument
+                # Check to see if the word after "request" is an argument.  If the argument
                 # is something we recognize, then do the appropriate thing.  If not, tell the user
                 # to run the main command for options
-                if symbol_regex.match(split_command[2]):
-                    if split_command[2] in ["-d", "--delete"]:
-                        # Gather the words, making sure there are no blanks
-                        words = [x for x in split_command[3:] if not symbol_regex.match(x)]
 
-                        # For each word given, remove the user from the word's entry in the collection
-                        if len(words) > 0:
-                            remove_from_words = []
-                            req = bot.db_conn.find_documents(
-                                {"word": {"$in": words}},
-                                db=bot.db_conn.CONFIG["db"],
-                                collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                            )
+                if split_command[2] in ["-d", "--delete"]:
+                    # Gather the words, making sure there are no blanks
+                    words = [x for x in split_command[3:] if not symbol_regex.match(x)]
 
-                            for word in req:
-                                if user in word["users"]:
-                                    word["users"].remove(user)
-
-                                    # Then check to see if the word's list is empty.  If so, remove it from the
-                                    # collection
-                                    if len(word["users"]) == 0:
-                                        bot.db_conn.delete_document(
-                                            {"word": word["word"]},
-                                            db=bot.db_conn.CONFIG["db"],
-                                            collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                        )
-                                    else:
-                                        bot.db_conn.update_document_by_oid(
-                                            word["_id"],
-                                            {"$set": {"users": word["users"]}},
-                                            db=bot.db_conn.CONFIG["db"],
-                                            collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                        )
-
-                            # TODO: This probably needs to change
-                            if len(words) > 0:
-                                response = "I have deleted your request(s) for: " + ", ".join(words)
-                            else:
-                                response = "I did not delete anything.  Did you have symbols in the word(s)?"
-                        else:
-                            # If the words list is empty, then the user didn't provide any words
-                            response = "The correct format for deleting requests is the following:\n\n" \
-                                "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
-                                "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
-                    elif split_command[2] in ["-c", "--clear"]:
+                    # For each word given, remove the user from the word's entry in the collection
+                    if len(words) > 0:
+                        remove_from_words = []
                         req = bot.db_conn.find_documents(
-                            {"users": user},
+                            {"word": {"$in": words}},
                             db=bot.db_conn.CONFIG["db"],
                             collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                         )
@@ -155,25 +127,45 @@ def execute(command, user, bot):
                                         collection=bot.db_conn.CONFIG["collections"]["book_requests"]
                                     )
 
-                        response = "All of your requests have been cleared."
-                    elif split_command[2] == "--justforfun":
-                        request_list = bot.db_conn.find_documents(
-                            {},
-                            db=bot.db_conn.CONFIG["db"],
-                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                        )
-
-                        # Here we are simply iterating through the collection to build a nice
-                        # list to print
-
-                        response = "Here are the current requests:\n\n" + \
-                                   "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in request_list])
-                    elif split_command[2] == "--admin":
-                        response = "You have selected the admin option.  Not yet implemented."
+                        # TODO: This probably needs to change
+                        if len(words) > 0:
+                            response = "I have deleted your request(s) for: " + ", ".join(words)
+                        else:
+                            response = "I did not delete anything.  Did you have symbols in the word(s)?"
                     else:
-                        response = "Unknown symbol or argument detected.  Were you trying to delete or clear " \
-                            "requests?  Run `@NoobSNHUbot packtbook request` for a list of options."
-                else:
+                        # If the words list is empty, then the user didn't provide any words
+                        response = "The correct format for deleting requests is the following:\n\n" \
+                            "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
+                            "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
+                elif split_command[2] in ["-c", "--clear"]:
+                    req = bot.db_conn.find_documents(
+                        {"users": user},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+                    )
+
+                    for word in req:
+                        if user in word["users"]:
+                            word["users"].remove(user)
+
+                            # Then check to see if the word's list is empty.  If so, remove it from the
+                            # collection
+                            if len(word["users"]) == 0:
+                                bot.db_conn.delete_document(
+                                    {"word": word["word"]},
+                                    db=bot.db_conn.CONFIG["db"],
+                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                )
+                            else:
+                                bot.db_conn.update_document_by_oid(
+                                    word["_id"],
+                                    {"$set": {"users": word["users"]}},
+                                    db=bot.db_conn.CONFIG["db"],
+                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                                )
+
+                    response = "All of your requests have been cleared."
+                elif split_command[2] in ["-a", "--add"]:
                     # Gather the words, making sure there are no blanks
                     words = [x for x in split_command[2:] if not symbol_regex.match(x)]
 
@@ -206,11 +198,29 @@ def execute(command, user, bot):
                             )
 
                     response = "You have made a book request for: " + ", ".join(words)
+                elif split_command[2] == "--justforfun":
+                    request_list = bot.db_conn.find_documents(
+                        {},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+                    )
+
+                    # Here we are simply iterating through the collection to build a nice
+                    # list to print
+
+                    response = "Here are the current requests:\n\n" + \
+                               "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in request_list])
+                elif split_command[2] == "--admin":
+                    response = "You have selected the admin option.  Not yet implemented."
+                else:
+                    response = "Unknown symbol or argument detected. Run `@NoobSNHUbot packtbook request` " \
+                               "for a list of options."
             else:
                 response = "The correct format is the following:\n\n" \
-                    "*To add:*\n`@NoobSNHUbot packtbook request words, to, add, here`\n" \
-                    "*To delete:*\n`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
-                    "`@NoobSNHUbot packtbook request --delete words, to, delete, here`\n" \
+                    "*To add:*\n`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, add, here`  or:\n" \
+                    "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, add, here`\n" \
+                    "*To delete:*\n`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete, here`  or:\n" \
+                    "`@NoobSNHUbot packtbook request --delete words, \"or phrases\", to, delete, here`\n" \
                     "*To clear all*:\n`@NoobSNHUbot packtbook request -c`  or:\n" \
                     "`@NoobSNHUbot packtbook request --clear`"
 
@@ -239,18 +249,17 @@ def execute(command, user, bot):
                 tag_list = set()
 
                 if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
-                    # Split the title so we can check words
-                    title_split = split_text(book_string)
-                    # Find the right documents
+                    # Gather all of the requests
                     req = bot.db_conn.find_documents(
-                        {"word": {"$in": title_split}},
+                        {},
                         db=bot.db_conn.CONFIG["db"],
                         collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                     )
 
                     # Figure out if we have to tag anyone
                     for word in req:
-                        tag_list.update(word["users"])
+                        if word["word"] in book_string.lower():
+                            tag_list.update(word["users"])
 
                 # Set the time here
                 time_split = [int(x) for x in time_string.split(":")]
