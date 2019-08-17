@@ -53,27 +53,6 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
-def split_text(text: str):
-    """
-    Slightly more elaborate split function that automatically converts
-    the text to lowercase and accounts for random spaces
-
-    :param text: text to split
-    :type text: str
-    :return: list of split words
-    :rtype: list
-    """
-
-    # First, remove punctuation
-    sub_text = re.sub("[:,]", "", text)
-    # Then set everything to lowercase
-    sub_text = sub_text.lower()
-    # Split text, avoiding blanks
-    split_list = [x.strip() for x in sub_text.split(" ") if x != ""]
-    # Return the completed list
-    return split_list
-
-
 def execute(command, user, bot):
     response = None
     attachment = None
