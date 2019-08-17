@@ -9,7 +9,6 @@ __pycache__/
 junk/
 config/
 cfg/
-
 test_cmd.py
 pip-selfcheck.json
 *.html

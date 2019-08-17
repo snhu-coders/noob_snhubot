@@ -74,8 +74,16 @@ with `@Noob SNHUbot`:
     * `regex`: gives video links pertaining to regular expressions in Python. 
 * packtbook
   * Reaches out to the Packtbook Website to display the latest free book of the day.
-  * `packtbook mini` will show the attachment in a smaller format.
   * Automatically scheduled to launch at 8:30PM Eastern Time.
+  * Supports secondary `request` command:
+    * Enabled by adding a `book_requests` section to the mongo configuration as seen below.  Requests can be disabled independently of mongo by simply omitting `book_requests`.
+    * `@Noob SNHUbot packtbook request (-a/--add) [list, of, words, "or phrases", here]` adds request words for the requesting user.
+    * `@Noob SNHUbot packtbook request (-d/--delete) [list, of, words, "or phrases", here]` deletes the given word(s) from the user's requests.
+    * `@Noob SNHUbot packtbook request (-c/--clear)` clears all of the user's requests.
+    * `@Noob SNHUbot packtbook request --justforfun` prints out an ugly list of all of the current requests.
+    * `@Noob SNHUbot packtbook request --admin` is intended for admin functionality, but is not yet implemented.
+    * Words can be separated either by space or comma.  Phrases need to be enclosed by quotes `""`.
+  * If requests are enabled in the configuration, users are tagged when books are posted if words in the book's title match a user's request words.
 * roll `XdY[±Z]`
   * Rolls X number of Y-Sided dice with a + or - Z modifier!
   * Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
@@ -146,6 +154,7 @@ db: my_database
 collections:
   conn: conn_log
   cmds: cmd_log
+  book_requests: book_requests
 hostname: my_db_server
 port: 27017
 ```

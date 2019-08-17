@@ -86,12 +86,15 @@ class Bot:
                 'channel': channel
             }
 
-            result = self.db_conn.log_to_collection(
-                doc, self.db_conn.CONFIG['db'], self.db_conn.CONFIG['collections']['cmds'])
+            result = self.db_conn.insert_document(
+                doc,
+                db=self.db_conn.CONFIG['db'],
+                collection=self.db_conn.CONFIG['collections']['cmds']
+            )
 
             # TODO: Fix logging output for DB stuff
             output(
-                f"[{self.db_conn.db}: {self.db_conn.collection}] - Inserted: {result.inserted_id}")
+               f"[{self.db_conn.db}: {self.db_conn.collection}] - Inserted: {result.inserted_id}")
 
         if msg_type == "message":
             response, attachment = self.execute_command(
@@ -116,10 +119,14 @@ class Bot:
             }}
 
             result = self.db_conn.update_document_by_oid(
-                result.inserted_id, update)
+                result.inserted_id,
+                update,
+                db=self.db_conn.CONFIG['db'],
+                collection=self.db_conn.CONFIG['collections']['cmds']
+            )
 
             output(
-                f"[{self.db_conn.db}: {self.db_conn.collection}] - Updated: {result.raw_result}")
+               f"[{self.db_conn.db}: {self.db_conn.collection}] - Updated: {result.raw_result}")
 
         return out
 

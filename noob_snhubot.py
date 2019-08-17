@@ -135,8 +135,11 @@ if __name__ == "__main__":
                     'bot_id': bot.id
                 }
 
-                mongo.log_to_collection(
-                    doc, mc['db'], mc['collections']['conn'])
+                mongo.insert_document(
+                    doc,
+                    db=mc['db'],
+                    collection=mc['collections']['conn']
+                )
 
             while slack_client.server.connected:
                 # Exceptions: TimeoutError, ConnectionResetError,

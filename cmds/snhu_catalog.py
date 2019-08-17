@@ -15,16 +15,14 @@ def execute(command, user, bot):
     # Check if we're running with a database connection
     if bot.db_conn:
         # perform imports
-        #from noob_snhubot import mongo, slack_client
-
         bot_id = bot.id
 
-        # change to catalog/subjects context
-        bot.db_conn.use_db('catalog')
-        bot.db_conn.use_collection('subjects')
-
         # get all documents
-        data = bot.db_conn.find_documents({})
+        data = bot.db_conn.find_documents(
+            {},
+            db="catalog",
+            collection="subjects",
+        )
 
         # create Catalog using HashTable implementation
         catalog = Catalog()
