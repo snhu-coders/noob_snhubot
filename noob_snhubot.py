@@ -110,7 +110,12 @@ if __name__ == "__main__":
     if args.sched_config:
         sc = load_config(args.sched_config)
 
-        scheduler = Scheduler(sc)
+        # Localize scheduler
+        if app_config:
+            if "timezone" in app_config.keys():
+                scheduler = Scheduler(sc, app_config["timezone"])
+            else:
+                scheduler = Scheduler(sc)
     else:
         scheduler = Scheduler()
 
