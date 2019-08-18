@@ -146,7 +146,7 @@ def execute(command, user, bot):
                     response = "All of your requests have been cleared."
                 elif split_command[2] in ["-a", "--add"]:
                     # Gather the words, making sure there are no blanks
-                    words = [x for x in split_command[2:] if not symbol_regex.match(x)]
+                    words = [x.lower() for x in split_command[2:] if not symbol_regex.match(x)]
 
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
