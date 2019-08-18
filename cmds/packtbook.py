@@ -16,11 +16,6 @@ increment = 0.5
 # for requests while accounting for phrases indicated by "phrase".
 separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
 
-# This regex will be used to determine if any request words begin with
-# symbols.  We will not register those because they are probably intended
-# as arguments.
-symbol_regex = re.compile(r"^[\W]+")
-
 try:
     opts = Options()
     opts.add_argument("--headless")
@@ -75,11 +70,10 @@ def execute(command, user, bot):
 
                 if split_command[2] in ["-d", "--delete"]:
                     # Gather the words, making sure there are no blanks
-                    words = [x for x in split_command[3:] if not symbol_regex.match(x)]
+                    words = [x.lower() for x in split_command[3:] if not x.startswith("-")]
 
                     # For each word given, remove the user from the word's entry in the collection
                     if len(words) > 0:
-                        remove_from_words = []
                         req = bot.db_conn.find_documents(
                             {"word": {"$in": words}},
                             db=bot.db_conn.CONFIG["db"],
@@ -106,16 +100,12 @@ def execute(command, user, bot):
                                         collection=bot.db_conn.CONFIG["collections"]["book_requests"]
                                     )
 
-                        # TODO: This probably needs to change
-                        if len(words) > 0:
-                            response = "I have deleted your request(s) for: " + ", ".join(words)
-                        else:
-                            response = "I did not delete anything.  Did you have symbols in the word(s)?"
+                        response = "I have deleted your request(s) for: " + ", ".join(words)
                     else:
-                        # If the words list is empty, then the user didn't provide any words
+                        # If the words list is empty, then the user didn't provide any valid words
                         response = "The correct format for deleting requests is the following:\n\n" \
-                            "`@NoobSNHUbot packtbook request -d words, to, delete, here`  or:\n" \
-                            "`@NoobSNHUbot packtbook request --delete words, to, delete, here`"
+                            "`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete, here`  or:\n" \
+                            "`@NoobSNHUbot packtbook request --delete words, \"or phrases\", to, delete, here`"
                 elif split_command[2] in ["-c", "--clear"]:
                     req = bot.db_conn.find_documents(
                         {"users": user},
@@ -146,7 +136,7 @@ def execute(command, user, bot):
                     response = "All of your requests have been cleared."
                 elif split_command[2] in ["-a", "--add"]:
                     # Gather the words, making sure there are no blanks
-                    words = [x.lower() for x in split_command[2:] if not symbol_regex.match(x)]
+                    words = [x.lower() for x in split_command[2:] if not x.startswith("-")]
 
                     # See if the words are already in the collection.  If they are, add the user to them if they aren't
                     # there already.  If the words are not there, add them with an initial list of a single user.
@@ -176,7 +166,13 @@ def execute(command, user, bot):
                                 collection=bot.db_conn.CONFIG["collections"]["book_requests"],
                             )
 
-                    response = "You have made a book request for: " + ", ".join(words)
+                    if len(words) > 0:
+                        response = "You have made a book request for: " + ", ".join(words)
+                    else:
+                        # If the words list is empty, then the user didn't provide any valid words
+                        response = "The correct format for adding requests is the following:\n\n" \
+                                   "`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, delete, here`  or:\n" \
+                                   "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, delete, here`"
                 elif split_command[2] == "--justforfun":
                     request_list = bot.db_conn.find_documents(
                         {},
