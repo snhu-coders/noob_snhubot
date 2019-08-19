@@ -7,8 +7,10 @@ data = {
     "basics": [
         ["Basics", "Everyone has to start somewhere!\n"],
         [
+            ["Command line arguments: ", "https://youtu.be/oxMmUwxWAXE\n"],
             ["Tabs and Indentation: ", "https://youtu.be/3XbPF2saKck\n"],
             ["Data Types - Strings: ", "https://youtu.be/BgoUPzkGlwU\n"],
+            ["String formatting: ", "https://youtu.be/W-f6lsO-HTw\n"],
             ["Data Types - Boolean: ", "https://youtu.be/RrvjoSY5FnI\n"],
             ["Data Types - Numbers: ", "https://youtu.be/jagQT1BhXfw\n"]
         ]
@@ -17,12 +19,6 @@ data = {
         ["Dictionary", "Dictionaries!  Lovely Python data type.  Here is some info:\n"],
         [
             ["Dictionary Basics: ", "https://youtu.be/xu6Sf1QAwLw\n"]
-        ]
-    ],
-    "files": [
-        ["Files", "File handling.  Can be a grizzly topic.  Our friend Eddie is here to help!\n"],
-        [
-            ["Basic Read/Write Files: ", "https://youtu.be/cj8-F2TazlE\n"]
         ]
     ],
     "functions": [
@@ -49,10 +45,6 @@ data = {
         ["Projects", "These projects can get pretty gnarly.  Have a gander at these videos:\n"],
         [
             ["Grocery List: ", "https://youtu.be/ZpNbFrMcqMo\n"],
-            ["ATM Script: ", "https://youtu.be/UR7o14jgS5g\n"],
-            ["Fixed Length File: ", "https://youtu.be/WXW_sUridko\n"],
-            ["Variable Length File: ", "https://youtu.be/NjJJfPKExKE\n"],
-            ["Account Transactions: ", "https://youtu.be/6l88pu9Ba94\n"]
         ]
     ],
     "regex": [
