@@ -210,6 +210,7 @@ def execute(command, user, bot):
 
             # Get the elements
             warning_message = grab_element(2, driver.find_element_by_css_selector, ".message.warning")
+            error_message = grab_element(2, driver.find_element_by_css_selector, ".message.error")
             book_string = grab_element(delay, driver.find_element_by_class_name, "product__title")
             img_src = grab_element(delay, driver.find_element_by_class_name, "product__img")
             time_string = grab_element(delay, driver.find_element_by_class_name, "countdown__timer")
@@ -217,9 +218,12 @@ def execute(command, user, bot):
             # Check to see if the warning message was present
             if warning_message:
                 response = warning_message
+            elif error_message:
+                response = "There are errors on the Packt page.  Try again after a while to see if " \
+                           "they have been resolved."
             # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
             elif None in [book_string, img_src, time_string]:
-                response = "This operation has failed.  Dynamic page elements are weird like that.  Try again."
+                response = "I couldn't grab the correct page elements.  Try again in a few minutes."
             else:
                 tag_list = set()
 
