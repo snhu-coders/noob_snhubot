@@ -1,0 +1,20 @@
+language: python
+python:
+  - "3.6"
+  - "3.6-dev"  # 3.6 development branch
+  - "3.7"
+  - "3.7-dev"  # 3.7 development branch
+# command to install dependencies
+addons:
+  chrome: stable
+install: # Install ChromeDriver (64bits; replace 64 with 32 for 32bits).
+  - pip install -r requirements.txt
+  - wget -N https://chromedriver.storage.googleapis.com/75.0.3770.140/chromedriver_linux64.zip -P ~/
+  - unzip ~/chromedriver_linux64.zip -d ~/
+  - rm ~/chromedriver_linux64.zip
+  - sudo mv -f ~/chromedriver /usr/local/share/
+  - sudo chmod +x /usr/local/share/chromedriver
+  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
+# command to run tests
+script:
+  - pytest
