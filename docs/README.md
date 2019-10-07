@@ -79,6 +79,7 @@ with `@Noob SNHUbot`:
     * Enabled by adding a `book_requests` section to the mongo configuration as seen below.  Requests can be disabled independently of mongo by simply omitting `book_requests`.
     * `@Noob SNHUbot packtbook request (-a/--add) [list, of, words, "or phrases", here]` adds request words for the requesting user.
     * `@Noob SNHUbot packtbook request (-d/--delete) [list, of, words, "or phrases", here]` deletes the given word(s) from the user's requests.
+    * `@Noob SNHUbot packtbook request (-l/--list)` returns a list of the user's current requests.
     * `@Noob SNHUbot packtbook request (-c/--clear)` clears all of the user's requests.
     * `@Noob SNHUbot packtbook request --justforfun` prints out an ugly list of all of the current requests.
     * `@Noob SNHUbot packtbook request --admin` is intended for admin functionality, but is not yet implemented.

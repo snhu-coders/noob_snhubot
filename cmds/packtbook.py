@@ -14,7 +14,11 @@ increment = 0.5
 
 # The following regex is designed to separate all of the words given
 # for requests while accounting for phrases indicated by "phrase".
-separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
+
+# We'll try a slightly reworked regex for a while.  Here's the old one:
+# separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
+
+separator_regex = re.compile(r"(?<=\")(?:[-+#.$\w]+\s?)+(?=\")|[-+#.$\w]+")
 
 try:
     opts = Options()
@@ -173,6 +177,26 @@ def execute(command, user, bot):
                         response = "The correct format for adding requests is the following:\n\n" \
                                    "`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, delete, here`  or:\n" \
                                    "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, delete, here`"
+                elif split_command[2] in ["-l", "--list"]:
+                    # We'll us this to store the words that the user has requested
+                    personal_list = []
+
+                    # Grab a list of requests that include the user
+                    request_list = bot.db_conn.find_documents(
+                        {"users": user},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+                    )
+
+                    for word in request_list:
+                        if user in word["users"]:
+                            personal_list.append(word["word"])
+
+                    if len(personal_list) > 0:
+                        response = "Here are your current requests: \n\n{}".format(
+                            "\n".join([f"`{x}`" for x in personal_list]))
+                    else:
+                        response = "You haven't made any requests.  Why don't you make one already?!"
                 elif split_command[2] == "--justforfun":
                     request_list = bot.db_conn.find_documents(
                         {},
@@ -192,6 +216,8 @@ def execute(command, user, bot):
                                "for a list of options."
             else:
                 response = "The correct format is the following:\n\n" \
+                    "*To see your requests:*\n`@NoobSNHUbot packtbook request -l`  or:\n" \
+                    "`@NoobSNHUbot packtbook request --list`\n" \
                     "*To add:*\n`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, add, here`  or:\n" \
                     "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, add, here`\n" \
                     "*To delete:*\n`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete, here`  or:\n" \
