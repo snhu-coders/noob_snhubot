@@ -96,6 +96,8 @@ with `@Noob SNHUbot`:
 * what's my name?
   * Simple call and response.
   * Responds with: _"Your name is `<@{name}>`! Did you forget or something?"_
+* xkcd
+  * Pulls the latest version of the xkcd comic as a Slack attachment
 
 ## Modular Commands
 
