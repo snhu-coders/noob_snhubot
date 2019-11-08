@@ -1,3 +1,12 @@
+"""Packtbook command module
+
+Todo:
+    * Even though this has been refactored, things can still tighten up a bit.
+    * Typing hints are not complete
+    * Admin features at some point
+    * Explore requests-html as an alternative to selenium
+"""
+
 import json
 import time
 import re
@@ -6,15 +15,19 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from urllib.error import HTTPError
+from typing import Any
 
 command = 'packtbook'
 public = True
 increment = 0.5
 
-
 # The following regex is designed to separate all of the words given
 # for requests while accounting for phrases indicated by "phrase".
-separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
+
+# We'll try a slightly reworked regex for a while.  Here's the old one:
+# separator_regex = re.compile(r"(?<=\")[-+#.$ \w]+(?=\")|[-+#.$\w]+")
+
+separator_regex = re.compile(r"(?<=\")(?:[-+#.$\w]+\s?)+(?=\")|[-+#.$\w]+")
 
 try:
     opts = Options()
@@ -25,6 +38,33 @@ try:
 except WebDriverException as e:
     print("Error encountered while starting the ChromeDriver:\n{}".format(e))
     driver = None
+
+
+def parse_arguments(command) -> (str, set):
+    split_command = [x.lower() for x in separator_regex.findall(command)]
+
+    if len(split_command) == 1:
+        return "packtbook", None
+    elif len(split_command) > 2 and split_command[1] in ["request", "requests"] \
+            and split_command[2] in ["-a", "--add"]:
+        return "request_add", {x for x in split_command[3:] if not x.startswith("-")}
+    elif len(split_command) > 2 and split_command[1] in ["request", "requests"] \
+            and split_command[2] in ["-d", "--delete"]:
+        return "request_delete", {x for x in split_command[3:] if not x.startswith("-")}
+    elif len(split_command) == 3 and split_command[1] in ["request", "requests"] \
+            and split_command[2] in ["-l", "--list"]:
+        return "request_list", None
+    elif len(split_command) == 3 and split_command[1] in ["request", "requests"] \
+            and split_command[2] in ["-c", "--clear"]:
+        return "request_clear", None
+    elif len(split_command) == 3 and split_command[1] in ["request", "requests"] \
+            and split_command[2] == "--admin":
+        return "request_admin", None
+    elif len(split_command) == 3 and split_command[1] in ["request", "requests"] \
+            and split_command[2] == "--dump":
+        return "request_dump", None
+    else:
+        return "packtbook_help", None
 
 
 def grab_element(delay, elem_function, attr):
@@ -48,160 +88,157 @@ def grab_element(delay, elem_function, attr):
         delay -= increment
 
 
+def request_add(words: set, user: str, bot: Any) -> str:
+    if len(words) > 0:
+        # See if the words are already in the collection.  If they are, add the user to them if they aren't
+        # there already.  If the words are not there, add them with an initial list of a single user.
+        for word in words:
+            req = bot.db_conn.find_document(
+                {"word": word},
+                db=bot.db_conn.CONFIG["db"],
+                collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+            )
+
+            if req:
+                # Only add the user if they are not in there
+                if user not in req["users"]:
+                    # Insert the user into the word
+                    req["users"].append(user)
+                    # Then update the document in the db
+                    bot.db_conn.update_document_by_oid(
+                        req["_id"],
+                        {"$set": {"users": req["users"]}},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                    )
+            else:
+                bot.db_conn.insert_document(
+                    {"word": word, "users": [user]},
+                    db=bot.db_conn.CONFIG["db"],
+                    collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+                )
+        return "You have made a book request for: " + ", ".join(words)
+    else:
+        return "You didn't list any valid words to add!"
+
+
+def request_delete(words: set, user: str, bot: Any) -> str:
+    # For each word given, remove the user from the word's entry in the collection
+    if len(words) > 0:
+        req = bot.db_conn.find_documents(
+            {"word": {"$in": list(words)}},
+            db=bot.db_conn.CONFIG["db"],
+            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+        )
+
+        for word in req:
+            if user in word["users"]:
+                word["users"].remove(user)
+
+                # Then check to see if the word's list is empty.  If so, remove it from the
+                # collection
+                if len(word["users"]) == 0:
+                    bot.db_conn.delete_document(
+                        {"word": word["word"]},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                    )
+                else:
+                    bot.db_conn.update_document_by_oid(
+                        word["_id"],
+                        {"$set": {"users": word["users"]}},
+                        db=bot.db_conn.CONFIG["db"],
+                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                    )
+
+        return "I have deleted your request(s) for: " + ", ".join(words)
+    else:
+        return "You didn't list any valid words to delete!"
+
+
+def request_clear(user: str, bot: Any) -> str:
+    req = bot.db_conn.find_documents(
+        {"users": user},
+        db=bot.db_conn.CONFIG["db"],
+        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+    )
+
+    for word in req:
+        if user in word["users"]:
+            word["users"].remove(user)
+
+            # Then check to see if the word's list is empty.  If so, remove it from the
+            # collection
+            if len(word["users"]) == 0:
+                bot.db_conn.delete_document(
+                    {"word": word["word"]},
+                    db=bot.db_conn.CONFIG["db"],
+                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                )
+            else:
+                bot.db_conn.update_document_by_oid(
+                    word["_id"],
+                    {"$set": {"users": word["users"]}},
+                    db=bot.db_conn.CONFIG["db"],
+                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
+                )
+
+    return "All of your requests have been cleared."
+
+
+def request_list(user: str, bot: Any) -> str:
+
+    # We'll us this to store the words that the user has requested
+    personal_list = []
+
+    # Grab a list of requests that include the user
+    req_list = bot.db_conn.find_documents(
+        {"users": user},
+        db=bot.db_conn.CONFIG["db"],
+        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+    )
+
+    for word in req_list:
+        if user in word["users"]:
+            personal_list.append(word["word"])
+
+    if len(personal_list) > 0:
+        return "Here are your current requests: \n\n{}".format(
+            "\n".join([f"`{x}`" for x in personal_list]))
+    else:
+        return "You haven't made any requests.  Why don't you make one already?!"
+
+
+def request_admin() -> str:
+    return "You have selected the admin option.  Not yet implemented"
+
+
+def request_dump(bot: Any) -> str:
+
+    req_list = bot.db_conn.find_documents(
+        {},
+        db=bot.db_conn.CONFIG["db"],
+        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
+    )
+
+    # Here we are simply iterating through the collection to build a nice
+    # list to print
+
+    return "Here are the current requests:\n\n" + \
+           "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in req_list])
+
+
 def execute(command, user, bot):
     response = None
     attachment = None
-    delay = 10
-    time_attrs = ["hours", "minutes", "seconds"]
-    url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
-    # Split the given command here and set it all to lowercase
-    split_command = separator_regex.findall(command)
+    operation, params = parse_arguments(command)
 
-    # Check to see if the user is trying a request.  If so, insert them
-    # into the collection.  If not, proceed as normal
-    if len(split_command) > 1 and split_command[1] == "request":
-        # If requests are enabled, then do the work.  If not, tell the user that requests are disabled.
-        if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
-            if len(split_command) > 2:
-                # Check to see if the word after "request" is an argument.  If the argument
-                # is something we recognize, then do the appropriate thing.  If not, tell the user
-                # to run the main command for options
+    if operation == "packtbook":
+        delay = 10
+        time_attrs = ["hours", "minutes", "seconds"]
+        url = 'https://www.packtpub.com/packt/offers/free-learning/'
 
-                if split_command[2] in ["-d", "--delete"]:
-                    # Gather the words, making sure there are no blanks
-                    words = [x.lower() for x in split_command[3:] if not x.startswith("-")]
-
-                    # For each word given, remove the user from the word's entry in the collection
-                    if len(words) > 0:
-                        req = bot.db_conn.find_documents(
-                            {"word": {"$in": words}},
-                            db=bot.db_conn.CONFIG["db"],
-                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                        )
-
-                        for word in req:
-                            if user in word["users"]:
-                                word["users"].remove(user)
-
-                                # Then check to see if the word's list is empty.  If so, remove it from the
-                                # collection
-                                if len(word["users"]) == 0:
-                                    bot.db_conn.delete_document(
-                                        {"word": word["word"]},
-                                        db=bot.db_conn.CONFIG["db"],
-                                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                    )
-                                else:
-                                    bot.db_conn.update_document_by_oid(
-                                        word["_id"],
-                                        {"$set": {"users": word["users"]}},
-                                        db=bot.db_conn.CONFIG["db"],
-                                        collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                    )
-
-                        response = "I have deleted your request(s) for: " + ", ".join(words)
-                    else:
-                        # If the words list is empty, then the user didn't provide any valid words
-                        response = "The correct format for deleting requests is the following:\n\n" \
-                            "`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete, here`  or:\n" \
-                            "`@NoobSNHUbot packtbook request --delete words, \"or phrases\", to, delete, here`"
-                elif split_command[2] in ["-c", "--clear"]:
-                    req = bot.db_conn.find_documents(
-                        {"users": user},
-                        db=bot.db_conn.CONFIG["db"],
-                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                    )
-
-                    for word in req:
-                        if user in word["users"]:
-                            word["users"].remove(user)
-
-                            # Then check to see if the word's list is empty.  If so, remove it from the
-                            # collection
-                            if len(word["users"]) == 0:
-                                bot.db_conn.delete_document(
-                                    {"word": word["word"]},
-                                    db=bot.db_conn.CONFIG["db"],
-                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                )
-                            else:
-                                bot.db_conn.update_document_by_oid(
-                                    word["_id"],
-                                    {"$set": {"users": word["users"]}},
-                                    db=bot.db_conn.CONFIG["db"],
-                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                )
-
-                    response = "All of your requests have been cleared."
-                elif split_command[2] in ["-a", "--add"]:
-                    # Gather the words, making sure there are no blanks
-                    words = [x.lower() for x in split_command[2:] if not x.startswith("-")]
-
-                    # See if the words are already in the collection.  If they are, add the user to them if they aren't
-                    # there already.  If the words are not there, add them with an initial list of a single user.
-                    for word in words:
-                        req = bot.db_conn.find_document(
-                            {"word": word},
-                            db=bot.db_conn.CONFIG["db"],
-                            collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                        )
-
-                        if req:
-                            # Only add the user if they are not in there
-                            if user not in req["users"]:
-                                # Insert the user into the word
-                                req["users"].append(user)
-                                # Then update the document in the db
-                                bot.db_conn.update_document_by_oid(
-                                    req["_id"],
-                                    {"$set": {"users": req["users"]}},
-                                    db=bot.db_conn.CONFIG["db"],
-                                    collection=bot.db_conn.CONFIG["collections"]["book_requests"]
-                                )
-                        else:
-                            bot.db_conn.insert_document(
-                                {"word": word, "users": [user]},
-                                db=bot.db_conn.CONFIG["db"],
-                                collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                            )
-
-                    if len(words) > 0:
-                        response = "You have made a book request for: " + ", ".join(words)
-                    else:
-                        # If the words list is empty, then the user didn't provide any valid words
-                        response = "The correct format for adding requests is the following:\n\n" \
-                                   "`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, delete, here`  or:\n" \
-                                   "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, delete, here`"
-                elif split_command[2] == "--justforfun":
-                    request_list = bot.db_conn.find_documents(
-                        {},
-                        db=bot.db_conn.CONFIG["db"],
-                        collection=bot.db_conn.CONFIG["collections"]["book_requests"],
-                    )
-
-                    # Here we are simply iterating through the collection to build a nice
-                    # list to print
-
-                    response = "Here are the current requests:\n\n" + \
-                               "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in request_list])
-                elif split_command[2] == "--admin":
-                    response = "You have selected the admin option.  Not yet implemented."
-                else:
-                    response = "Unknown symbol or argument detected. Run `@NoobSNHUbot packtbook request` " \
-                               "for a list of options."
-            else:
-                response = "The correct format is the following:\n\n" \
-                    "*To add:*\n`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, add, here`  or:\n" \
-                    "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, add, here`\n" \
-                    "*To delete:*\n`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete, here`  or:\n" \
-                    "`@NoobSNHUbot packtbook request --delete words, \"or phrases\", to, delete, here`\n" \
-                    "*To clear all*:\n`@NoobSNHUbot packtbook request -c`  or:\n" \
-                    "`@NoobSNHUbot packtbook request --clear`"
-
-        else:
-            response = "Requests are currently disabled.  Contact your workspace admin for information."
-    else:
         # Simple catch all error logic
         try:
             # Set the driver to wait a little bit before assuming elements are not present, then grab the page:
@@ -262,10 +299,11 @@ def execute(command, user, bot):
                     time_format = "{}, {}, and {}"
 
                 time_left_string = time_format.format(*times_left)
+                flavor_text = f"{', '.join([f'<@{x}>' for x in tag_list])}" if len(tag_list) > 0 else ""
 
                 output = {
                     "pretext": f"The Packt Free Book of the Day is:",
-                    "text": f"Come and get it!\n{', '.join([f'<@{x}>' for x in tag_list])}",
+                    "text": flavor_text,
                     "title": book_string,
                     "title_link": url,
                     "footer": "There's still {} to get this book!".format(time_left_string),
@@ -288,5 +326,36 @@ def execute(command, user, bot):
 
             response = 'I have failed my human overlords!\nYou should be able to find the Packt Free' \
                        ' Book of the day here: {}'.format(url)
+        return response, attachment
+    elif operation == "packtbook_help":
+        response = "The correct format is the following:\n\n" \
+            "*To see today's book:*\n`@NoobSNHUbot packtbook`\n" \
+            "*To see your requests:*\n`@NoobSNHUbot packtbook request -l`  or:\n" \
+            "`@NoobSNHUbot packtbook request --list`\n" \
+            "*To add requests:*\n`@NoobSNHUbot packtbook request -a words, \"or phrases\", to, add`  or:\n" \
+            "`@NoobSNHUbot packtbook request --add words, \"or phrases\", to, add`\n" \
+            "*To delete requests:*\n`@NoobSNHUbot packtbook request -d words, \"or phrases\", to, delete`  or:\n" \
+            "`@NoobSNHUbot packtbook request --delete words, \"or phrases\", to, delete`\n" \
+            "*To clear all requests*:\n`@NoobSNHUbot packtbook request -c`  or:\n" \
+            "`@NoobSNHUbot packtbook request --clear`"
+    else:
+        if bot.db_conn and "book_requests" in bot.db_conn.CONFIG["collections"]:
+            if operation == "request_add":
+                response = request_add(params, user, bot)
+            elif operation == "request_delete":
+                response = request_delete(params, user, bot)
+            elif operation == "request_clear":
+                response = request_clear(user, bot)
+            elif operation == "request_list":
+                response = request_list(user, bot)
+            elif operation == "request_admin":
+                response = request_admin()
+            elif operation == "request_dump":
+                response = request_dump(bot)
+            else:
+                response = "Sorry, I don't recognize the Packtbook option you entered. " \
+                           " Were you trying to make a request?"
+        else:
+            response = "Request functions are currently disabled.  Contact the workspace admin for information."
 
     return response, attachment
