@@ -1,5 +1,7 @@
 import re
+import requests
 
+from io import BytesIO
 from slackclient import SlackClient
 
 from .Output import output
@@ -7,6 +9,19 @@ from .Output import output
 
 class SlackConn(SlackClient):
     MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
+
+    def __init__(self, token: str = None,  oauth_token: str = None) -> None:
+        """
+        Initializes the extended SlackConn class to take advantage of an added oauth token
+
+        Args:
+            token (str): the standard token for connecting to Slack
+            oauth_token (str): secondary token needed to use auxiliary Slack API features
+        Returns:
+            None
+        """
+        super().__init__(token)
+        self.oauth_token = oauth_token
 
     def parse_bot_commands(self, slack_events, bot_id):
         """
@@ -75,3 +90,31 @@ class SlackConn(SlackClient):
                 text=response.message,
                 unfurl_links=True
             )
+
+    def upload_image(self, filename: str = None) -> str:
+        """
+        Uploads an image to Slack on behalf of the bot and returns a public link to the file.
+
+        Args:
+            filename (str): name of the file in current directory to upload
+        Returns:
+            str: public link to access file
+        """
+
+        with open(filename, "rb") as image:
+            encoded_image = BytesIO(image.read())
+
+        upload = requests.post(
+            "https://slack.com/api/files.upload",
+            data={"filename": filename},
+            files={"file": encoded_image.getvalue()},
+            headers={"Authorization": f"Bearer {self.oauth_token}"}
+        )
+
+        public = requests.post(
+            "https://slack.com/api/files.sharedPublicURL",
+            json={"file": upload.json()["file"]["id"]},
+            headers={"Authorization": f"Bearer {self.oauth_token}"}
+        )
+
+        return public.json()["file"]["permalink_public"]

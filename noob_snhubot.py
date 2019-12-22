@@ -12,23 +12,25 @@ from Bot import Bot
 from BotHelper import MongoConn, Scheduler, SlackConn, output
 
 
-def get_token(slack_config=None, slack_env_variable='SLACK_CLIENT'):
+def get_tokens(slack_config: str = None, slack_env_variable: str = 'SLACK_CLIENT',
+               slack_oauth_variable: str = 'SLACK_OAUTH') -> (str, str):
     """
     Get the Slack token used for connection
 
     Args:
         slack_config (str): Path of the Slack configuration file
         slack_env_variable (str): The environment variable used for the Slack client token
-
+        slack_oauth_variable (str): The environment variable used for the Slack oauth token
     Returns:
-        The token from the configuration file or the environment variable
+        tuple(str, str): The tokens retrieved from the file or env variables
     """
+
     try:
         if slack_config:
-            return load_config(slack_config)['token']
+            return load_config(slack_config)['token'], load_config(slack_config)['oauth']
         else:
             #v = args.slack_env_variable if args.slack_env_variable else 'slack_client'
-            return os.environ[slack_env_variable.upper()]
+            return os.environ[slack_env_variable.upper()], os.environ[slack_oauth_variable.upper()]
     except KeyError as e:
         sys.exit("No environment variable {} defined. Exiting...".format(e))
 
@@ -66,7 +68,7 @@ if __name__ == "__main__":
     sc = parser.add_mutually_exclusive_group()
     sc.add_argument("-s", "--slack_config", required=False,
                     help="Relative path to Slack configuration file.")
-    sc.add_argument("-e", "--slack_env_variable", required=False,
+    sc.add_argument("-e", "--slack_env_variables", required=False, nargs=2,
                     help="Environment variable holding the Slack client token.")
 
     # noise = parser.add_mutually_exclusive_group()
@@ -84,14 +86,15 @@ if __name__ == "__main__":
 
     # Process Token
     if args.slack_config:
-        token = get_token(slack_config=args.slack_config)
+        token, oauth_token = get_tokens(slack_config=args.slack_config)
     elif args.slack_env_variable:
-        token = get_token(slack_env_variable=args.slack_env_variable)
+        token, oauth_token = get_tokens(slack_env_variable=args.slack_env_variable[0],
+                                        slack_oauth_variable=args.slack_env_variable[1])
     else:
-        token = get_token()
+        token, oauth_token = get_tokens()
 
     # create new Slack Client object
-    slack_client = SlackConn(token)
+    slack_client = SlackConn(token, oauth_token)
 
     # Setup Mongo DB if present
     mongo = None

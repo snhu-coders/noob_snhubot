@@ -85,6 +85,7 @@ with `@Noob SNHUbot`:
     * `@Noob SNHUbot packtbook request --admin` is intended for admin functionality, but is not yet implemented.
     * Words can be separated either by space or comma.  Phrases need to be enclosed by quotes `""`.
   * If requests are enabled in the configuration, users are tagged when books are posted if words in the book's title match a user's request words.
+  * If an error or warning is found on the Packtbook page, or if the required elements are not found, a screenshot is taken and displayed in lieu of giving users a vague message.
 * roll `XdY[±Z]`
   * Rolls X number of Y-Sided dice with a + or - Z modifier!
   * Invalid rolls will respond with _"That roll is not valid. Try `@Noob SNHUbot roll help`"_
@@ -147,7 +148,8 @@ admin_emails:   ['example@example.com']
 Sample `slack.yml`:
 
 ```yaml
-token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ  
+token: xoxb-123456789012-aBcDeFgHiJkLmNoPqRsTuVwXyZ
+oauth: xoxp-123456789123-aBcDeFgHiJkL-aBcDeFgHiJkL-aBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeF
 ```
 
 Sample `mongo.yml`:
@@ -186,8 +188,8 @@ optional arguments:
                         Sets the delay between RTM reads.
   -s SLACK_CONFIG, --slack_config SLACK_CONFIG
                         Relative path to Slack configuration file.
-  -e SLACK_ENV_VARIABLE, --slack_env_variable SLACK_ENV_VARIABLE
-                        Environment variable holding the Slack client token.
+  -e SLACK_ENV_VARIABLE, SLACK_OAUTH_VARIABLE, --slack_env_variables SLACK_ENV_VARIABLE, SLACK_OAUTH_VARIABLE
+                        Environment variables holding the Slack user and oauth tokens.
 ```
 
 ### Examples command execution

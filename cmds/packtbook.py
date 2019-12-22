@@ -10,7 +10,9 @@ Todo:
 import json
 import time
 import re
+import os
 
+from noob_snhubot import Bot
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -228,6 +230,28 @@ def request_dump(bot: Any) -> str:
            "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in req_list])
 
 
+def grab_screen(drv: webdriver, bot: Bot, out_text: str, url: str) -> dict:
+    # Take a screenshot of the page
+    filename = f"screen-{int(time.time())}.png"
+    drv.set_window_size(1920, 1080)
+    drv.save_screenshot(filename)
+
+    # Make the attachment
+    output = {
+        "pretext": out_text,
+        "title": "Current Page",
+        "title_link": url,
+        "color": "#ffca5b",
+        "image_url": bot.slack_client.upload_image(filename)
+    }
+
+    # Remove the file so we aren't clogging the server with garbage
+    os.remove(filename)
+
+    # Return the attachment to the requester
+    return json.dumps([output])
+
+
 def execute(command, user, bot):
     response = None
     attachment = None
@@ -254,13 +278,15 @@ def execute(command, user, bot):
 
             # Check to see if the warning message was present
             if warning_message:
-                response = warning_message
+                attachment = grab_screen(driver, bot, f"There was a warning on the page:\n_{warning_message}_\n\nDoes "
+                                                      f"everything look okay?", url)
             elif error_message:
-                response = "There are errors on the Packt page.  Try again after a while to see if " \
-                           "they have been resolved."
+                attachment = grab_screen(driver, bot, f"There was an error on the page:\n_{error_message}_\n\nDoes "
+                                                      f"everything look okay?", url)
             # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
             elif None in [book_string, img_src, time_string]:
-                response = "I couldn't grab the correct page elements.  Try again in a few minutes."
+                attachment = grab_screen(driver, bot, "I didn't find the right page elements. "
+                                                      "Maybe there's an event? Here's a screenshot.", url)
             else:
                 tag_list = set()
 
