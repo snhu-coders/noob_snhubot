@@ -10,11 +10,9 @@ Todo:
 import json
 import time
 import re
-import requests
-import base64
 import os
 
-from noob_snhubot import load_config
+from noob_snhubot import Bot
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -232,29 +230,11 @@ def request_dump(bot: Any) -> str:
            "\n".join([f"`{req['word']}: {', '.join(req['users'])}`" for req in req_list])
 
 
-def grab_screen(drv: webdriver, out_text: str, url: str) -> dict:
+def grab_screen(drv: webdriver, bot: Bot, out_text: str, url: str) -> dict:
     # Take a screenshot of the page
     filename = f"screen-{int(time.time())}.png"
     drv.set_window_size(1920, 1080)
     drv.save_screenshot(filename)
-
-    # Encode the image so we can upload it somewhere
-    with open(filename, "rb") as image:
-        encoded_image = base64.b64encode(image.read())
-
-    # TODO: Circular import versus duplicate code dilemma.  This probably belongs with the main configs eventually.
-    #   Another option is finally getting an API server working for this.
-    cfg = load_config("cfg/imgbb.yml")
-
-    # Set up the payload for upload
-    data = {
-        "key": cfg["img-bb"]["key"],
-        "image": encoded_image,
-        "name": filename
-    }
-
-    # Do the upload here
-    req = json.loads(requests.post(url=cfg["img-bb"]["url"], data=data).text)
 
     # Make the attachment
     output = {
@@ -262,7 +242,7 @@ def grab_screen(drv: webdriver, out_text: str, url: str) -> dict:
         "title": "Current Page",
         "title_link": url,
         "color": "#ffca5b",
-        "image_url": req["data"]["image"]["url"]
+        "image_url": bot.slack_client.upload_image(filename)
     }
 
     # Remove the file so we aren't clogging the server with garbage
@@ -298,15 +278,15 @@ def execute(command, user, bot):
 
             # Check to see if the warning message was present
             if warning_message:
-                attachment = grab_screen(driver, f"There was a warning on the page:\n_{warning_message}_\n\nDoes "
-                                                 f"everything look okay?", url)
+                attachment = grab_screen(driver, bot, f"There was a warning on the page:\n_{warning_message}_\n\nDoes "
+                                                      f"everything look okay?", url)
             elif error_message:
-                attachment = grab_screen(driver, f"There was an error on the page:\n_{error_message}_\n\nDoes "
-                                                 f"everything look okay?", url)
+                attachment = grab_screen(driver, bot, f"There was an error on the page:\n_{error_message}_\n\nDoes "
+                                                      f"everything look okay?", url)
             # If any of the regular elements fail, tell the people to try again.  If not, do the attachment
             elif None in [book_string, img_src, time_string]:
-                attachment = grab_screen(driver, "I didn't find the right page elements. "
-                                                 "Maybe there's an event? Here's a screenshot.", url)
+                attachment = grab_screen(driver, bot, "I didn't find the right page elements. "
+                                                      "Maybe there's an event? Here's a screenshot.", url)
             else:
                 tag_list = set()
 
